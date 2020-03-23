@@ -108,12 +108,10 @@ Process{
                 }
             }
 
-            $startUTC = $((Get-Date "1970-01-01 00:00:00.000Z").ToUniversalTime() + ([TimeSpan]::FromSeconds($hostStart))) | Get-Date -Format "yyyy/MM/dd HH:mm:ss"
-            $endUTC = $((Get-Date "1970-01-01 00:00:00.000Z").ToUniversalTime() + ([TimeSpan]::FromSeconds($hostEnd))) | Get-Date -Format "yyyy/MM/dd HH:mm:ss"
             $duration = [math]::Ceiling(($hostEnd - $hostStart)/60)
 
             $obj=[PSCustomObject]@{
-                "@timestamp" = $startUTC #Remove later for at ingest enrichment
+                "@timestamp" = $hostStart #Remove later for at ingest enrichment
                 "destination" = [PSCustomObject]@{
                     "port" = $r.port
                 }
@@ -121,8 +119,8 @@ Process{
                     "category" = "host" #Remove later for at ingest enrichment
                     "kind" = "state" #Remove later for at ingest enrichment
                     "duration" = $duration
-                    "start" = $startUTC
-                    "end" = $endUTC
+                    "start" = $hostStart
+                    "end" = $hostEnd
                     "risk_score" = $r.severity
                     "dataset" = "vulnerability" #Remove later for at ingest enrichment
                     "provider" = "Nessus" #Remove later for at ingest enrichment
