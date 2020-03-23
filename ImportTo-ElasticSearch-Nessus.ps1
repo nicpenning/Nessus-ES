@@ -108,7 +108,7 @@ Process{
                 }
             }
 
-            $duration = [math]::Ceiling(($hostEnd - $hostStart)/60)
+            $duration = $(($hostEnd - $hostStart)*1000000000)
 
             $obj=[PSCustomObject]@{
                 "@timestamp" = $hostStart #Remove later for at ingest enrichment
