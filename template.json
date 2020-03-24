@@ -3,18 +3,19 @@
   "index_patterns": [
     "nessus-*"
   ],
+  "settings": {},
   "mappings": {
     "_routing": {
       "required": false
     },
     "numeric_detection": false,
     "_meta": {},
-    "dynamic": true,
     "_source": {
       "excludes": [],
       "includes": [],
       "enabled": true
     },
+    "dynamic": true,
     "dynamic_templates": [],
     "date_detection": false,
     "properties": {
@@ -25,6 +26,14 @@
         "store": false,
         "type": "date",
         "doc_values": true
+      },
+      "ecs": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "keyword"
+          }
+        }
       },
       "log": {
         "type": "object",
@@ -493,5 +502,6 @@
         }
       }
     }
-  }
+  },
+  "aliases": {}
 }
