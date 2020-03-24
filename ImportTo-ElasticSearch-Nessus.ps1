@@ -107,7 +107,6 @@ Process{
                 "HOST_END_TIMESTAMP$" {$hostEnd = $nHPTN_Item."#text"}
                 }
             }
-
             $duration = $(($hostEnd - $hostStart)*1000000000)
 
             $obj=[PSCustomObject]@{
@@ -115,6 +114,9 @@ Process{
                 "destination" = [PSCustomObject]@{
                     "port" = $r.port
                 }
+                "ecs" = [PSCustomObject]@{
+                    "version" = "1.5"
+                }                
                 "event" = [PSCustomObject]@{
                     "category" = "host" #Remove later for at ingest enrichment
                     "kind" = "state" #Remove later for at ingest enrichment
