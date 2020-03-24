@@ -135,7 +135,7 @@ Process{
                     "ip" = $ip
                     "mac" = if($macAddr){$macAddr}else{$null}
                     "hostname" = $n.name
-                    "name" = if($fqdn){$fqbn}else{$null}
+                    "name" = if($fqdn){$fqdn}else{$null}
                     "os" = [PSCustomObject]@{
                         "family" = $os
                         "full" = @(if($opersys){$opersys.Split("`n`r")}else{$null})
