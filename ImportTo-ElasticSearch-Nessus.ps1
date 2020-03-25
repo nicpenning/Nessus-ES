@@ -107,7 +107,11 @@ Process{
                 "HOST_END_TIMESTAMP$" {$hostEnd = $nHPTN_Item."#text"}
                 }
             }
-            $duration = $(($hostEnd - $hostStart)*1000000000)
+            #Convert seconds to milliseconds
+            $hostStart = [int]$hostStart*1000
+            $hostEnd = [int]$hostEnd*1000
+            #Convert milliseconds to nano seconds
+            $duration = $(($hostEnd - $hostStart)*1000000)
 
             $obj=[PSCustomObject]@{
                 "@timestamp" = $hostStart #Remove later for at ingest enrichment
@@ -129,12 +133,11 @@ Process{
                     "message" = $n.name + ' - ' + $r.synopsis #Remove later for at ingest enrichment
                     "severity" = $r.severity #Remove later for at ingest enrichment
                     "url" = (@(if($r.cve){($r.cve | ForEach-Object {"https://cve.mitre.org/cgi-bin/cvename.cgi?name=$_"})}else{$null})) #Remove later for at ingest enrichment
-                    #"https://cve.mitre.org/cgi-bin/cvename.cgi?name="
                 }
                 "host" = [PSCustomObject]@{
                     "ip" = $ip
-                    "mac" = if($macAddr){$macAddr}else{$null}
-                    "hostname" = $n.name
+                    "mac" = (@(if($macAddr){($macAddr.Split([Environment]::NewLine))}else{$null}))
+                    "hostname" = if($fqdn){$fqdn}else{$null}
                     "name" = if($fqdn){$fqdn}else{$null}
                     "os" = [PSCustomObject]@{
                         "family" = $os
@@ -161,6 +164,7 @@ Process{
                     "os_confidence" = $operSysConfidence
                     "os_identification_method" = $operSysMethod
                     "rdns" = $rdns
+                    "name_of_host" = $n.name
                     "cvss" = [PSCustomObject]@{
                         "vector" = $r.cvss_vector
                     }
@@ -206,7 +210,6 @@ Process{
             $hostStart = ''
             $hostEnd = ''
             $cves = ''
-            $reportName = ''
             $rdns = ''
             $operSysConfidence = ''
             $operSysMethod = ''
