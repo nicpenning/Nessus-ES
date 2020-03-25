@@ -20,12 +20,7 @@
     "date_detection": false,
     "properties": {
       "@timestamp": {
-        "format": "epoch_second",
-        "index": true,
-        "ignore_malformed": false,
-        "store": false,
-        "type": "date",
-        "doc_values": true
+        "type": "date"
       },
       "ecs": {
         "type": "object",
@@ -288,7 +283,6 @@
             "doc_values": true
           },
           "start": {
-            "format": "epoch_second",
             "index": true,
             "ignore_malformed": false,
             "store": false,
@@ -296,7 +290,6 @@
             "doc_values": true
           },
           "end": {
-            "format": "epoch_second",
             "index": true,
             "ignore_malformed": false,
             "store": false,
@@ -355,6 +348,9 @@
             "store": false,
             "type": "boolean",
             "doc_values": true
+          },
+          "name_of_host": {
+            "type": "text"
           },
           "unsupported_os": {
             "index": true,
