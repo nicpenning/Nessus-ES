@@ -350,7 +350,12 @@
             "doc_values": true
           },
           "name_of_host": {
-            "type": "text"
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
           },
           "unsupported_os": {
             "index": true,
@@ -451,7 +456,12 @@
             }
           },
           "os_identification_method": {
-            "type": "text"
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
           },
           "cvss": {
             "type": "object",
@@ -468,7 +478,12 @@
             }
           },
           "rnds": {
-            "type": "text"
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
           }
         }
       },
