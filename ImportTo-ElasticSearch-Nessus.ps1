@@ -10,8 +10,10 @@
    How to create and use an API key for Elastic can be found here: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
 
    Tested for ElasticStack 7.6.1 - Should work on 7.0+, not tested on older clusters.
+
+   Use -DomainName if you wish to normalize the host name data to take advantage of the correlation between WinLogBeat and other beats that dont append the domain name to the data like Nessus does.
 .EXAMPLE
-   .\ImportTo-ElasticSearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted"
+   .\ImportTo-ElasticSearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted" -DomainName "organization.local"
 #>
 
 [CmdletBinding()]
@@ -37,7 +39,12 @@ Param
     [Parameter(Mandatory=$false,
                 ValueFromPipelineByPropertyName=$true,
                 Position=3)]
-    $ApiKey
+    $ApiKey,
+    # Domain Extension
+    [Parameter(Mandatory=$false,
+                ValueFromPipelineByPropertyName=$true,
+                Position=4)]
+    $DomainName
 )
 
 Begin{
@@ -71,6 +78,9 @@ Process{
 
     #Create index name
     if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2020"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
+    
+    #Customize domain name
+    if($DomainName){Write-Host "Using the Domain Name you provided ($DomainName). This will transform computer1.$DomainName => computer1." -ForegroundColor Green}else{$DomainName = ""; Write-Host "No Domain Name was entered, so you won't be able to correlate Nessus data with other ECS data sets such as WinLogBeat." -ForegroundColor Yellow}
 
     #Now let the magic happen!
     Write-Host "
@@ -78,7 +88,7 @@ Process{
 
     The time it takes to parse and ingest will vary on the file size. 
      
-    Note: Files larger than 1GB could take over 15 minutes.
+    Note: Files larger than 1GB could take over 35 minutes.
 
     You can check if data is getting ingested by visiting Kibana and look under Index Management for this index: $Index
 
@@ -117,6 +127,7 @@ Process{
                 "@timestamp" = $hostStart #Remove later for at ingest enrichment
                 "destination" = [PSCustomObject]@{
                     "port" = $r.port
+                    "ip" = $ip
                 }
                 "ecs" = [PSCustomObject]@{
                     "version" = "1.5"
@@ -135,13 +146,16 @@ Process{
                     "url" = (@(if($r.cve){($r.cve | ForEach-Object {"https://cve.mitre.org/cgi-bin/cvename.cgi?name=$_"})}else{$null})) #Remove later for at ingest enrichment
                 }
                 "host" = [PSCustomObject]@{
+                    "id" = if($macAddr){[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($macAddr))}else{$null} #Base64 Mac Address(es) for ID
                     "ip" = $ip
                     "mac" = (@(if($macAddr){($macAddr.Split([Environment]::NewLine))}else{$null}))
-                    "hostname" = if($fqdn){$fqdn}else{$null}
-                    "name" = if($fqdn){$fqdn}else{$null}
+                    "hostname" = if($fqdn){$fqdn -replace ".$DomainName"}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
+                    "name" = if($fqdn){$fqdn -replace ".$DomainName"}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
                     "os" = [PSCustomObject]@{
                         "family" = $os
                         "full" = @(if($opersys){$opersys.Split("`n`r")}else{$null})
+                        "name" = @(if($opersys){$opersys.Split("`n`r")}else{$null})
+                        "platform" = $os
                     }
                 }
                 "log" = [PSCustomObject]@{
@@ -209,7 +223,6 @@ Process{
             $macAddr = ''
             $hostStart = ''
             $hostEnd = ''
-            $cves = ''
             $rdns = ''
             $operSysConfidence = ''
             $operSysMethod = ''
