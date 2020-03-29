@@ -3,7 +3,14 @@
   "index_patterns": [
     "nessus-*"
   ],
-  "settings": {},
+  "settings": {
+    "index": {
+      "lifecycle": {
+        "name": "nessus",
+        "rollover_alias": "nessus"
+      }
+    }
+  },
   "mappings": {
     "_routing": {
       "required": false
@@ -65,6 +72,9 @@
             "store": false,
             "type": "long",
             "doc_values": true
+          },
+          "ip": {
+            "type": "ip"
           }
         }
       },
@@ -84,6 +94,9 @@
           "os": {
             "type": "object",
             "properties": {
+              "name": {
+                "type": "keyword"
+              },
               "family": {
                 "eager_global_ordinals": false,
                 "norms": false,
@@ -93,6 +106,12 @@
                 "split_queries_on_whitespace": false,
                 "index_options": "docs",
                 "doc_values": true
+              },
+              "version": {
+                "type": "keyword"
+              },
+              "platform": {
+                "type": "keyword"
               },
               "full": {
                 "eager_global_ordinals": false,
@@ -122,6 +141,17 @@
             "index_options": "docs",
             "doc_values": true
           },
+          "id": {
+            "eager_global_ordinals": false,
+            "norms": false,
+            "ignore_above": 1024,
+            "index": true,
+            "store": false,
+            "type": "keyword",
+            "split_queries_on_whitespace": false,
+            "index_options": "docs",
+            "doc_values": true
+          },
           "mac": {
             "eager_global_ordinals": false,
             "norms": false,
@@ -131,6 +161,9 @@
             "split_queries_on_whitespace": false,
             "index_options": "docs",
             "doc_values": true
+          },
+          "architecture": {
+            "type": "keyword"
           }
         }
       },
