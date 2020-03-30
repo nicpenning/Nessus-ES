@@ -146,7 +146,6 @@ Process{
                     "url" = (@(if($r.cve){($r.cve | ForEach-Object {"https://cve.mitre.org/cgi-bin/cvename.cgi?name=$_"})}else{$null})) #Remove later for at ingest enrichment
                 }
                 "host" = [PSCustomObject]@{
-                    "id" = if($macAddr){[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($macAddr))}else{$null} #Base64 Mac Address(es) for ID
                     "ip" = $ip
                     "mac" = (@(if($macAddr){($macAddr.Split([Environment]::NewLine))}else{$null}))
                     "hostname" = if($fqdn){$fqdn -replace ".$DomainName"}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
