@@ -71,7 +71,7 @@ Process{
     #Elastic Instance (Hard code values here)
     $elasticSearchIP = '127.0.0.1'
     $elasticSearchPort = '9200'
-    if($ElasticURL){Write-Host "Using the URL your provided for Elastic: $ElasticURL" -ForegroundColor Green}else{$ElasticURL = "https://"+$elasticSearchIP+":"+$elasticSearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticUrl)." -ForegroundColor Yellow}
+    if($ElasticURL){Write-Host "Using the URL you provided for Elastic: $ElasticURL" -ForegroundColor Green}else{$ElasticURL = "https://"+$elasticSearchIP+":"+$elasticSearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticUrl)." -ForegroundColor Yellow}
     #Nessus User Authenitcation Variables for Elastic
     if($ApiKey){Write-Host "Using the Api Key you provided." -ForegroundColor Green}else{Write-Host "ApiKey Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"; break;}
     $global:AuthenticationHeaders = @{Authorization = "ApiKey $apiKey"}
