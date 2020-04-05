@@ -9,7 +9,7 @@
 
    How to create and use an API key for Elastic can be found here: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
 
-   Tested for ElasticStack 7.6.1 - Should work on 7.0+, not tested on older clusters.
+   Tested on ElasticStack 7.6.1 - Should work on 7.0+, not tested on older clusters.
 
    Use -DomainName if you wish to normalize the host name data to take advantage of the correlation between WinLogBeat and other beats that dont append the domain name to the data like Nessus does.
 .EXAMPLE
@@ -222,6 +222,7 @@ Process{
             $macAddr = ''
             $hostStart = ''
             $hostEnd = ''
+            $cves = ''
             $rdns = ''
             $operSysConfidence = ''
             $operSysMethod = ''
