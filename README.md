@@ -2,7 +2,7 @@
 Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch with most of the ECS mappings possible.
 
 With some careful setup of your ElasticSearch cluster and a little PowerShell you can turn your .nessus files into this:
-![](https://github.com/nicpenning/Nessus-ES/blob/master/Screen%20Shot%202020-04-22%20at%209.19.46%20PM.png?raw=true)
+![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Dashboard.png)
 
 If you are looking for a more robust solution that handles many other vulnerability scanners try this project: https://github.com/HASecuritySolutions/VulnWhisperer
 
