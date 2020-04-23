@@ -11,12 +11,13 @@ This project is a simplified way of taking .nessus files and ingesting them into
 *Never tested
 
 ## Future
-- [ ] Add Index Template (How To)
-- [ ] Add Index Pattern (How To)
-- [X] Add Searches, Visualizations, and Dashboards
+- [ ] Add Index Template (How To/Automate)
+- [X] Add Index Pattern, Searches, Visualizations, and Dashboards
 - [ ] Add Detection Rules
 - [X] Have coverage of ECS across as many fields possible.
-- [ ] Add Automated Nessus File Downloads
-- [ ] Add Documentation
+- [ ] Add Automated Nessus File Download Script
+- [ ] Add Documentation (Setup, gotchas, and other good things to know.)
 
-Feel free to contribute!
+
+Here are some other details from the dashboard not pictured above that could also be useful:
+![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Details_Dashboard.png?raw=true)
