@@ -6,7 +6,7 @@ With some careful setup of your ElasticSearch cluster and a little PowerShell yo
 
 If you are looking for a more robust solution that handles many other vulnerability scanners try this project: https://github.com/HASecuritySolutions/VulnWhisperer
 
-This project is a simplified way of taking .nessus files and ingesting them into Elastic using PowerShell on Windows, Mac, or Linux*
+The Nessus-ES project is a simplified way of taking .nessus files and ingesting them into Elastic using PowerShell on Windows, Mac, or Linux*
 
 *Never tested
 
