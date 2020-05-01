@@ -10,8 +10,8 @@
    How to create and use an API key for Elastic can be found here: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
 
    Tested on ElasticStack 7.6.1 - Should work on 7.0+, not tested on older clusters.
-
-   Use -DomainName if you wish to normalize the host name data to take advantage of the correlation between WinLogBeat and other beats that dont append the domain name to the data like Nessus does.
+   
+   Use -DomainName if you have WinLogBeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer WinLogBeat.
 .EXAMPLE
    .\ImportTo-ElasticSearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted" -DomainName "organization.local"
 #>
@@ -80,7 +80,7 @@ Process{
     if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2020"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
     
     #Customize domain name
-    if($DomainName){Write-Host "Using the Domain Name you provided ($DomainName). This will transform computer1.$DomainName => computer1." -ForegroundColor Green}else{$DomainName = ""; Write-Host "No Domain Name was entered, so you won't be able to correlate Nessus data with other ECS data sets such as WinLogBeat." -ForegroundColor Yellow}
+    if($DomainName){Write-Host "Using the Domain Name you provided ($DomainName). This will transform computer1.$DomainName => computer1." -ForegroundColor Green}else{$DomainName = ""; Write-Host "No Domain Name was entered which is fine if you are using WinLogBeat 7.6.0 or newer for correlation in the SIEM App (Hosts)." -ForegroundColor Yellow}
 
     #Now let the magic happen!
     Write-Host "
