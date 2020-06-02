@@ -201,7 +201,7 @@ Process{
                     "reference" = (@(if($r.see_also){($r.see_also.Split([Environment]::NewLine))}else{$null}))
                     "report_id" = $reportName
                     "module" = $r.pluginName #Remove later for at ingest enrichment
-                    "classification" = (@(if($r.cve){($r.cve)}else{$null})) #Remove later for at ingest enrichment
+                    "classification" = (@(if($r.cve){("CVE")}else{$null})) #Remove later for at ingest enrichment
                     "score" = [PSCustomObject]@{
                             "base" = $r.cvss_base_score
                             "temporal" = $r.cvss_temporal_score
