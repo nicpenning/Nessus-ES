@@ -142,6 +142,7 @@ Process{
                     "dataset" = "vulnerability" #Remove later for at ingest enrichment
                     "provider" = "Nessus" #Remove later for at ingest enrichment
                     "message" = $n.name + ' - ' + $r.synopsis #Remove later for at ingest enrichment
+                    "module" = "ImportTo-ElasticSearch-Nessus"
                     "severity" = $r.severity #Remove later for at ingest enrichment
                     "url" = (@(if($r.cve){($r.cve | ForEach-Object {"https://cve.mitre.org/cgi-bin/cvename.cgi?name=$_"})}else{$null})) #Remove later for at ingest enrichment
                 }
