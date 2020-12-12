@@ -11,9 +11,8 @@
 
    Tested for Elastic Stack 7.6.1 - Should work on 7.0+, not tested on older clusters.
 
-   Use -DomainName if you have Winlogbeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer Winlogbeat.
 .EXAMPLE
-   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted" -DomainName "organization.local"
+   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted"
 #>
 
 [CmdletBinding()]
@@ -140,8 +139,8 @@ Process{
                 "host" = [PSCustomObject]@{
                     "ip" = $ip
                     "mac" = (@(if($macAddr){($macAddr.Split([Environment]::NewLine))}else{$null}))
-                    "hostname" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
-                    "name" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
+                    "hostname" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null}
+                    "name" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null}
                     "os" = [PSCustomObject]@{
                         "family" = $os
                         "full" = @(if($opersys){$opersys.Split("`n`r")}else{$null})
