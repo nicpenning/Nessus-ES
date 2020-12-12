@@ -1,6 +1,6 @@
 <#
 .Synopsis
-   Parse Nessus XML report and import into ElasticSearch using the _bulk API.
+   Parse Nessus XML report and import into Elasticsearch using the _bulk API.
 .DESCRIPTION
    Parse Nessus XML report and convert to expected json format (x-ndjson)
    for ElasticSearch _bulk API.
@@ -11,9 +11,9 @@
 
    Tested on ElasticStack 7.6.1 - Should work on 7.0+, not tested on older clusters.
    
-   Use -DomainName if you have WinLogBeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer WinLogBeat.
+   Use -DomainName if you have Winlogbeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer Winlogbeat.
 .EXAMPLE
-   .\ImportTo-ElasticSearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted" -DomainName "organization.local"
+   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted" -DomainName "organization.local"
 #>
 
 [CmdletBinding()]
@@ -29,7 +29,7 @@ Param
     [Parameter(Mandatory=$false,
                 ValueFromPipelineByPropertyName=$true,
                 Position=1)]
-    $ElasticURL,
+    $ElasticsearchURL,
     # ElasticSearch index mapping
     [Parameter(Mandatory=$false,
                 ValueFromPipelineByPropertyName=$true,
@@ -71,7 +71,7 @@ Process{
     #Elastic Instance (Hard code values here)
     $elasticSearchIP = '127.0.0.1'
     $elasticSearchPort = '9200'
-    if($ElasticURL){Write-Host "Using the URL you provided for Elastic: $ElasticURL" -ForegroundColor Green}else{$ElasticURL = "https://"+$elasticSearchIP+":"+$elasticSearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticUrl)." -ForegroundColor Yellow}
+    if($ElasticsearchURL){Write-Host "Using the URL you provided for Elasticsearch: $ElasticsearchURL" -ForegroundColor Green}else{$ElasticsearchURL = "https://"+$elasticSearchIP+":"+$elasticSearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticsearchUrl)." -ForegroundColor Yellow}
     #Nessus User Authenitcation Variables for Elastic
     if($ApiKey){Write-Host "Using the Api Key you provided." -ForegroundColor Green}else{Write-Host "ApiKey Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"; break;}
     $global:AuthenticationHeaders = @{Authorization = "ApiKey $apiKey"}
@@ -80,7 +80,7 @@ Process{
     if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2020"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
     
     #Customize domain name
-    if($DomainName){Write-Host "Using the Domain Name you provided ($DomainName). This will transform computer1.$DomainName => computer1." -ForegroundColor Green}else{$DomainName = ""; Write-Host "No Domain Name was entered which is fine if you are using WinLogBeat 7.6.0 or newer for correlation in the SIEM App (Hosts)." -ForegroundColor Yellow}
+    if($DomainName){Write-Host "Using the Domain Name you provided ($DomainName). This will transform computer1.$DomainName => computer1." -ForegroundColor Green}else{$DomainName = ""; Write-Host "No Domain Name was entered which is fine if you are using Winlogbeat 7.6.0 or newer for correlation in the SIEM App (Hosts)." -ForegroundColor Yellow}
 
     #Now let the magic happen!
     Write-Host "
@@ -232,7 +232,7 @@ Process{
         #Uncomment below to see the hash
         #$hash
         $ProgressPreference = 'SilentlyContinue'
-        $data = Invoke-RestMethod -Uri "$ElasticURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders
+        $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders
         #Error checking
         #$data.items | ConvertTo-Json -Depth 5
         
