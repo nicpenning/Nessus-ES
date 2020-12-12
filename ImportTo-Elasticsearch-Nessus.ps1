@@ -3,14 +3,14 @@
    Parse Nessus XML report and import into Elasticsearch using the _bulk API.
 .DESCRIPTION
    Parse Nessus XML report and convert to expected json format (x-ndjson)
-   for ElasticSearch _bulk API.
+   for Elasticsearch _bulk API.
 
    Original script credit found here --> https://github.com/iwikmai/Nessus-ES/blob/master/ImportTo-ElasticSearchBulk.ps1
 
    How to create and use an API key for Elastic can be found here: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
 
-   Tested on ElasticStack 7.6.1 - Should work on 7.0+, not tested on older clusters.
-   
+   Tested for Elastic Stack 7.6.1 - Should work on 7.0+, not tested on older clusters.
+
    Use -DomainName if you have Winlogbeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer Winlogbeat.
 .EXAMPLE
    .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted" -DomainName "organization.local"
@@ -25,26 +25,21 @@ Param
                 ValueFromPipelineByPropertyName=$true,
                 Position=0)]
     $InputXML,
-    # ElasticSearch endpoint
+    # Elasticsearch endpoint
     [Parameter(Mandatory=$false,
                 ValueFromPipelineByPropertyName=$true,
                 Position=1)]
     $ElasticsearchURL,
-    # ElasticSearch index mapping
+    # Elasticsearch index mapping
     [Parameter(Mandatory=$false,
                 ValueFromPipelineByPropertyName=$true,
                 Position=2)]
     $Index,
-    # ElasticSearch API Key
+    # Elasticsearch API Key
     [Parameter(Mandatory=$false,
                 ValueFromPipelineByPropertyName=$true,
                 Position=3)]
-    $ApiKey,
-    # Domain Extension
-    [Parameter(Mandatory=$false,
-                ValueFromPipelineByPropertyName=$true,
-                Position=4)]
-    $DomainName
+    $ApiKey
 )
 
 Begin{
@@ -69,9 +64,9 @@ Begin{
 }
 Process{
     #Elastic Instance (Hard code values here)
-    $elasticSearchIP = '127.0.0.1'
-    $elasticSearchPort = '9200'
-    if($ElasticsearchURL){Write-Host "Using the URL you provided for Elasticsearch: $ElasticsearchURL" -ForegroundColor Green}else{$ElasticsearchURL = "https://"+$elasticSearchIP+":"+$elasticSearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticsearchUrl)." -ForegroundColor Yellow}
+    $ElasticsearchIP = '127.0.0.1'
+    $ElasticsearchPort = '9200'
+    if($ElasticsearchURL){Write-Host "Using the URL you provided for Elastic: $ElasticsearchURL" -ForegroundColor Green}else{$ElasticsearchURL = "https://"+$ElasticsearchIP+":"+$ElasticsearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticsearchURL)." -ForegroundColor Yellow}
     #Nessus User Authenitcation Variables for Elastic
     if($ApiKey){Write-Host "Using the Api Key you provided." -ForegroundColor Green}else{Write-Host "ApiKey Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"; break;}
     $global:AuthenticationHeaders = @{Authorization = "ApiKey $apiKey"}
@@ -79,9 +74,6 @@ Process{
     #Create index name
     if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2020"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
     
-    #Customize domain name
-    if($DomainName){Write-Host "Using the Domain Name you provided ($DomainName). This will transform computer1.$DomainName => computer1." -ForegroundColor Green}else{$DomainName = ""; Write-Host "No Domain Name was entered which is fine if you are using Winlogbeat 7.6.0 or newer for correlation in the SIEM App (Hosts)." -ForegroundColor Yellow}
-
     #Now let the magic happen!
     Write-Host "
     Starting ingest of $InputXML.
@@ -127,7 +119,6 @@ Process{
                 "@timestamp" = $hostStart #Remove later for at ingest enrichment
                 "destination" = [PSCustomObject]@{
                     "port" = $r.port
-                    "ip" = $ip
                 }
                 "ecs" = [PSCustomObject]@{
                     "version" = "1.5"
@@ -142,15 +133,15 @@ Process{
                     "dataset" = "vulnerability" #Remove later for at ingest enrichment
                     "provider" = "Nessus" #Remove later for at ingest enrichment
                     "message" = $n.name + ' - ' + $r.synopsis #Remove later for at ingest enrichment
-                    "module" = "ImportTo-ElasticSearch-Nessus"
+                    "module" = "ImportTo-Elasticsearch-Nessus"
                     "severity" = $r.severity #Remove later for at ingest enrichment
                     "url" = (@(if($r.cve){($r.cve | ForEach-Object {"https://cve.mitre.org/cgi-bin/cvename.cgi?name=$_"})}else{$null})) #Remove later for at ingest enrichment
                 }
                 "host" = [PSCustomObject]@{
                     "ip" = $ip
                     "mac" = (@(if($macAddr){($macAddr.Split([Environment]::NewLine))}else{$null}))
-                    "hostname" = if($fqdn){$fqdn -replace ".$DomainName"}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
-                    "name" = if($fqdn){$fqdn -replace ".$DomainName"}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
+                    "hostname" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
+                    "name" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null} #Remove later for at ingest enrichment #This removes the Domain Name
                     "os" = [PSCustomObject]@{
                         "family" = $os
                         "full" = @(if($opersys){$opersys.Split("`n`r")}else{$null})
@@ -166,6 +157,7 @@ Process{
                     }
                 }
                 "nessus" = [PSCustomObject]@{
+                    "cve" = (@(if($r.cve){($r.cve).ToLower()}else{$null}))
                     "in_the_news" = if($r.in_the_news){$r.in_the_news}else{$null}
                     "solution" = $r.solution
                     "synopsis" = $r.synopsis
