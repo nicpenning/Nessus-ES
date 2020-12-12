@@ -35,6 +35,15 @@
             "type": "boolean",
             "doc_values": true
           },
+          "cve": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
           "cvss": {
             "type": "object",
             "properties": {
