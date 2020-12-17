@@ -1,5 +1,5 @@
 # Nessus-ES
-Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch with most of the ECS mappings possible.
+Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch with most of the ECS mappings.
 
 With some careful setup of your ElasticSearch cluster and a little PowerShell you can turn your .nessus files into this:
 ![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Dashboard.png)
@@ -25,6 +25,10 @@ Requirements
 - [ ] Add Detection Rules
 - [ ] Add Automated Nessus File Download Script
 - [ ] Add Setup Script (Template, Objects, API, etc..)
+
+
+## Added Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
+ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
 
 
 Here are some other details from the dashboard not pictured above that could also be useful:
