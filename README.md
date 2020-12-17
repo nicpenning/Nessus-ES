@@ -20,12 +20,11 @@ Requirements
 - [X] Add Index Pattern, Searches, Visualizations, and Dashboards
 - [X] Have coverage of ECS across as many fields possible.
 - [X] Add Documentation ([Wiki](https://github.com/nicpenning/Nessus-ES/wiki))
+- [X] Add Automated Nessus File Download Script
 
 ## Future
 - [ ] Add Detection Rules
-- [ ] Add Automated Nessus File Download Script
 - [ ] Add Setup Script (Template, Objects, API, etc..)
-
 
 ## Added Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
 ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
