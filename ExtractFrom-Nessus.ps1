@@ -1,6 +1,8 @@
 <#
 .Synopsis
-   Automatically download scans from the My Scans folder (or custom folder) and move them to a different folder of your choosing for archival purposes.
+   Automatically download scans from the My Scans folder (or custom folder) and move them to a different folder of your choosing for archival purposes (if you so choose).
+   Supplying Elasticsearch variables to this script will kick off the automation necessary to ingest the Nessus data into Elasticsearch. 
+   (Requires AutomateNessus.ps1 and ImportTo-Elasticsearch-Nessus.ps1 for end to end automation)
 .DESCRIPTION
    This script is useful for automating the downloads of Nessus scan files. The script will be able to allow for some customizations
    such as the Nessus scanner host, the location of the downloads, and the Nessus scan folder for which you wish to move the scans
@@ -11,7 +13,7 @@
    Tested for Nessus 8.9.0+.
 
 .EXAMPLE
-   .\ExtractFrom-Nessus.ps1 -NessusHostNameOrIP "127.0.0.1" -Port "8834" -DownloadFileLocation "C:\Nessus" -AccessKey "redacted" -SecretKey "redacted" -SourceFolderName "My Scans" -ArchiveFolderName "Archive-Ingested" -ExtendedFileNameAttribute "-scanner1"
+   .\ExtractFrom-Nessus.ps1 -NessusHostNameOrIP "127.0.0.1" -Port "8834" -DownloadFileLocation "C:\Nessus" -AccessKey "redacted" -SecretKey "redacted" -SourceFolderName "My Scans" -ArchiveFolderName "Archive-Ingested" -ExtendedFileNameAttribute "-scanner1" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus" -ElasticsearchApiKey "redacted"
 #>
 
 [CmdletBinding()]
@@ -57,7 +59,22 @@ Param
     [Parameter(Mandatory=$true,
         ValueFromPipelineByPropertyName=$true,
         Position=7)]
-    $ExtendedFileNameAttribute
+    $ExtendedFileNameAttribute,
+    # Add Elasticsearch Host to automate Nessus import
+    [Parameter(Mandatory=$false,
+        ValueFromPipelineByPropertyName=$true,
+        Position=8)]
+    $ElasticsearchURL,
+    # Add Elasticsearch index name to automate Nessus import
+    [Parameter(Mandatory=$false,
+        ValueFromPipelineByPropertyName=$true,
+        Position=9)]
+    $IndexName,
+    # Add Elasticsearch API key to automate Nessus import
+    [Parameter(Mandatory=$false,
+        ValueFromPipelineByPropertyName=$true,
+        Position=10)]
+    $ElasticsearchApiKey
 )
 
 Begin{
@@ -218,6 +235,11 @@ Process{
 End{
     Write-Host "Finished Exporting!" -ForegroundColor White
     #Kick of the Nessus Import! Just uncomment the two lines below and provide valid parameters.
-    #Write-Host "Time to ingest! Kicking off the Automate-NessusImport.ps1 script to ingest this data into Elasticsearch!"
-    #.\Automate-NessusImport.ps1 -DownloadedNessusFileLocation $DownloadFileLocation -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus" -ElasticsearchApiKey "redacted"
+    if(($null -ne $DownloadFileLocation) -and ($null -ne $ElasticsearchURL) -and ($null -ne $IndexName) -and ($null -ne $ElasticsearchApiKey)){
+        Write-Host "All Elasticsearch variables configured!" -Foreground Green
+	Write-Host "Time to ingest! Kicking off the Automate-NessusImport.ps1 script to ingest this data into Elasticsearch!"
+    	.\Automate-NessusImport.ps1 -DownloadedNessusFileLocation $DownloadFileLocation -ElasticsearchURL $ElasticsearchURL -IndexName $IndexName -ElasticsearchApiKey $ElasticsearchApiKey
+    }else{
+    	Write-Host "Not all of the Elasticsearch variables were configured to kick off the Automate-NessusImport script. This is the end of this process." -Foreground Yellow
+    }
 }
