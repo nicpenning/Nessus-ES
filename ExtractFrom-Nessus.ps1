@@ -4,7 +4,7 @@
 .DESCRIPTION
    This script is useful for automating the downloads of Nessus scan files. The script will be able to allow for some customizations
    such as the Nessus scanner host, the location of the downloads, and the Nessus scan folder for which you wish to move the scans
-   after they have been downloaded. This tool was inspired from the Posh-Nessus script. Due to lack of updates on the Posh-Nessus
+   after they have been downloaded (if you so choose). This tool was inspired from the Posh-Nessus script. Due to lack of updates on the Posh-Nessus
    project, it seemed easeier to call the raw API to perform the bare minimum functions necessary to export
    scans out automatically. I appreciate Tenable leaving these core API functions (export scan and scan status) in their product.
 
@@ -48,8 +48,8 @@ Param
         ValueFromPipelineByPropertyName=$true,
         Position=5)]
     $SourceFolderName,
-    # The destintation folder in Nessus UI for where you wish to move your scans for archive.
-        [Parameter(Mandatory=$true,
+    # The destintation folder in Nessus UI for where you wish to move your scans for archive. If this is not configued, scans will not be moved after download.
+        [Parameter(Mandatory=$false,
         ValueFromPipelineByPropertyName=$true,
         Position=6)]
     $ArchiveFolderName,
@@ -176,8 +176,13 @@ Process{
                     Invoke-RestMethod -Method Get -Uri "https://$($NessusHostNameOrIP)/scans/$($scanId)/export/$($exportInfo.file)/download" -ContentType "application/json" -Headers $headers -OutFile $exportFileName
                     $exportComplete = 1
                     Write-Host "Export succeeded!" -ForegroundColor Green
-                    #Move scan to archive!
-                    Move-ScanToArchive
+                    if($null -ne $ArchiveFolderName){
+		    	#Move scan to archive if folder is configured!
+			Write-Host "Archive scan folder configured so going to move the scan in the Nessus web UI to $ArchiveFolderName" -Foreground Yellow
+			Move-ScanToArchive
+		    }else{
+		    	Write-Host "Archive folder not configured so not moving scan in the Nessus web UI." -Foreground Yellow
+		    }
                 }
                 catch [System.Net.WebException]
                 {
