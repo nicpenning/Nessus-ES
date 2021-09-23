@@ -11,8 +11,9 @@
 
    Tested for Elastic Stack 7.6.1 - Should work on 7.0+, not tested on older clusters.
 
+   Use -DomainName if you have Winlogbeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer Winlogbeat.
 .EXAMPLE
-   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ApiKey "redacted"
+   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ElasticsearchAPIKey "redacted" -DomainName "organization.local"
 #>
 
 [CmdletBinding()]
@@ -35,13 +36,14 @@ Param
                 Position=2)]
     $Index,
     # Elasticsearch API Key
-    [Parameter(Mandatory=$false,
+    [Parameter(Mandatory=$true,
                 ValueFromPipelineByPropertyName=$true,
                 Position=3)]
-    $ApiKey
+    $ElasticsearchAPIKey
 )
 
 Begin{
+    if($PSVersionTable.PSVersion -lt 7){
     #Trust certs
     add-type @"
     using System.Net;
@@ -54,8 +56,11 @@ Begin{
         }
     }
 "@
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy}else{
+    
+    }
+
 
     $ErrorActionPreference = 'Stop'
     $nessus = [xml]''
@@ -67,11 +72,11 @@ Process{
     $ElasticsearchPort = '9200'
     if($ElasticsearchURL){Write-Host "Using the URL you provided for Elastic: $ElasticsearchURL" -ForegroundColor Green}else{$ElasticsearchURL = "https://"+$ElasticsearchIP+":"+$ElasticsearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticsearchURL)." -ForegroundColor Yellow}
     #Nessus User Authenitcation Variables for Elastic
-    if($ApiKey){Write-Host "Using the Api Key you provided." -ForegroundColor Green}else{Write-Host "ApiKey Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"; break;}
-    $global:AuthenticationHeaders = @{Authorization = "ApiKey $apiKey"}
+    if($ElasticsearchAPIKey){Write-Host "Using the Api Key you provided." -ForegroundColor Green}else{Write-Host "Elasticsearch API Key Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"; break;}
+    $global:AuthenticationHeaders = @{Authorization = "ApiKey $ElasticsearchAPIKey"}
 
     #Create index name
-    if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2020"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
+    if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2021"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
     
     #Now let the magic happen!
     Write-Host "
@@ -120,7 +125,7 @@ Process{
                     "port" = $r.port
                 }
                 "ecs" = [PSCustomObject]@{
-                    "version" = "1.5"
+                    "version" = "1.11"
                 }                
                 "event" = [PSCustomObject]@{
                     "category" = "host" #Remove later for at ingest enrichment
@@ -139,8 +144,8 @@ Process{
                 "host" = [PSCustomObject]@{
                     "ip" = $ip
                     "mac" = (@(if($macAddr){($macAddr.Split([Environment]::NewLine))}else{$null}))
-                    "hostname" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null}
-                    "name" = if($fqdn){$fqdn}elseif($rdns){$rdns}else{$null}
+                    "hostname" = if($fqdn -notmatch "sources" -and ($fqbn)){($fqdn).ToLower()}elseif($rdns){($rdns).ToLower()}else{$null} #Remove later for at ingest enrichment #Also, added a check for an extra "sources" sub field added to the fqbn field
+                    "name" = if($fqdn -notmatch "sources" -and ($fqbn)){($fqdn).ToLower()}elseif($rdns){($rdns).ToLower()}else{$null} #Remove later for at ingest enrichment #Also, added a check for an extra "sources" sub field added to the fqbn field
                     "os" = [PSCustomObject]@{
                         "family" = $os
                         "full" = @(if($opersys){$opersys.Split("`n`r")}else{$null})
@@ -169,17 +174,31 @@ Process{
                     "os_confidence" = $operSysConfidence
                     "os_identification_method" = $operSysMethod
                     "rdns" = $rdns
-                    "name_of_host" = $n.name
+                    "name_of_host" = $n.name.ToLower()
                     "cvss" = [PSCustomObject]@{
                         "vector" = $r.cvss_vector
                     }
                     "plugin" = [PSCustomObject]@{
                         "id" = $r.pluginID
                         "name" = $r.pluginName
-                        "date" = $r.plugin_publication_date
+                        "publication_date" = $r.plugin_publication_date
                         "type" = $r.plugin_type
                         "output" = $r.plugin_output
+                        "filename" = $r.fname
+                        "modification_date" = if($r.plugin_modification_date){$r.plugin_modification_date}else{$null}
                     }
+                    "vpr_score" = if($r.vpr_score){$r.vpr_score}else{$null}
+                    "exploit_code_maturity" = if($r.exploit_code_maturity){$r.exploit_code_maturity}else{$null}
+                    "exploitability_ease" = if($r.exploitability_ease){$r.exploitability_ease}else{$null}
+                    "age_of_vuln" = if($r.age_of_vuln){$r.age_of_vuln}else{$null}
+                    "patch_publication_date" = if($r.patch_publication_date){$r.patch_publication_date}else{$null}
+                    "stig_severity" = if($r.stig_severity){$r.stig_severity}else{$null}
+                    "threat" = [PSCustomObject]@{
+                        "intensity_last_28" = if($r.threat_intensity_last_28){$r.threat_intensity_last_28}else{$null}
+                        "recency" = if($r.threat_recency){$r.threat_recency}else{$null}
+                        "sources_last_28" = if($r.threat_sources_last_28){$r.threat_sources_last_28}else{$null}
+                    }
+                    "vuln_publication_date" = if($r.vuln_publication_date){$r.vuln_publication_date}else{$null}
                 }
                 "network" = [PSCustomObject]@{
                     "transport" = $r.protocol
@@ -195,8 +214,8 @@ Process{
                     "module" = $r.pluginName #Remove later for at ingest enrichment
                     "classification" = (@(if($r.cve){("CVE")}else{$null})) #Remove later for at ingest enrichment
                     "score" = [PSCustomObject]@{
-                            "base" = $r.cvss_base_score
-                            "temporal" = $r.cvss_temporal_score
+                        "base" = $r.cvss_base_score
+                        "temporal" = $r.cvss_temporal_score
                     }
                 }
 
@@ -223,10 +242,15 @@ Process{
         #Uncomment below to see the hash
         #$hash
         $ProgressPreference = 'SilentlyContinue'
-        $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders
+        try {
+            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders
+        }catch {
+            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
+        }
+        
         #Error checking
         #$data.items | ConvertTo-Json -Depth 5
-        
+
         $hash = ''
     }
 }
