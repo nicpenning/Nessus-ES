@@ -13,7 +13,7 @@
    Tested for Nessus 8.9.0+.
 
 .EXAMPLE
-   .\ExtractFrom-Nessus.ps1 -NessusHostNameOrIP "127.0.0.1" -Port "8834" -DownloadFileLocation "C:\Nessus" -AccessKey "redacted" -SecretKey "redacted" -SourceFolderName "My Scans" -ArchiveFolderName "Archive-Ingested" -ExtendedFileNameAttribute "-scanner1" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus" -ElasticsearchApiKey "redacted"
+   .\ExtractFrom-Nessus.ps1 -NessusHostNameOrIP "127.0.0.1" -Port "8834" -DownloadedNessusFileLocation "C:\Nessus" -AccessKey "redacted" -SecretKey "redacted" -SourceFolderName "My Scans" -ArchiveFolderName "Archive-Ingested" -ExtendedFileNameAttribute "_scanner1" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus" -ElasticsearchApiKey "redacted" -ExportScansFromToday "false" -ExportDay "01/11/2021"
 #>
 
 [CmdletBinding()]
@@ -31,10 +31,10 @@ Param
         Position=1)]
     $Port,
     # The location where you wish to save the extracted Nessus files from the scanner
-    [Parameter(Mandatory=$false,
+    [Parameter(Mandatory=$true,
         ValueFromPipelineByPropertyName=$true,
         Position=2)]
-    $DownloadFileLocation,
+    $DownloadedNessusFileLocation,
     # Nessus Access Key
     [Parameter(Mandatory=$true,
         ValueFromPipelineByPropertyName=$true,
@@ -45,8 +45,8 @@ Param
         ValueFromPipelineByPropertyName=$true,
         Position=4)]
     $SecretKey,
-    # The source folder for where the Nessus scans live in the UI. The Default is "My Scans
-    [Parameter(Mandatory=$true,
+    # The source folder for where the Nessus scans live in the UI. The Default is "My Scans"
+    [Parameter(Mandatory=$false,
         ValueFromPipelineByPropertyName=$true,
         Position=5)]
     $SourceFolderName,
@@ -56,7 +56,7 @@ Param
         Position=6)]
     $ArchiveFolderName,
     # Added atrribute for the end of the file name for uniqueness when using with multiple scanners
-    [Parameter(Mandatory=$true,
+    [Parameter(Mandatory=$false,
         ValueFromPipelineByPropertyName=$true,
         Position=7)]
     $ExtendedFileNameAttribute,
@@ -74,7 +74,17 @@ Param
     [Parameter(Mandatory=$false,
         ValueFromPipelineByPropertyName=$true,
         Position=10)]
-    $ElasticsearchApiKey
+    $ElasticsearchApiKey,
+    # Use this setting if you wish to only export the scans on the day the scan occurred. Default value is false.
+    [Parameter(Mandatory=$false,
+        ValueFromPipelineByPropertyName=$true,
+        Position=11)]
+    $ExportScansFromToday,
+    # Use this setting if you want to export scans for the specific day that the scan or scans occurred.
+    [Parameter(Mandatory=$false,
+        ValueFromPipelineByPropertyName=$true,
+        Position=12)]
+    $ExportDay
 )
 
 Begin{
@@ -91,16 +101,19 @@ Begin{
 "@
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+    $NessusURLandPort = $NessusHostNameOrIP+":"+$port
     $headers =  @{'X-ApiKeys' = "accessKey=$AccessKey; secretKey=$SecretKey"}
     #Don't parse the file downloads because we care about speed!
     $ProgressPreference = 'SilentlyContinue'
-
+    if($null -eq $SourceFolderName ){
+        $SourceFolderName = "My Scans"
+    }
     #Get FolderID from Folder name
     function getFolderIdFromName {
         param (
             $folderNames
         )
-        $folders = Invoke-RestMethod -Method Get -Uri "https://$($NessusHostNameOrIP)/folders" -ContentType "application/json" -Headers $headers
+        $folders = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/folders" -ContentType "application/json" -Headers $headers
         Write-Host "Folders Found: "
         $folders.folders.Name | ForEach-Object{
             Write-Host "$_" -ForegroundColor Green
@@ -109,7 +122,12 @@ Begin{
         $global:archiveFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[1]}).id
     }
     getFolderIdFromName $SourceFolderName, $ArchiveFolderName
-    
+
+    #Hardcoded Elasticsearch variables
+    $ElasticsearchURL = "http://127.0.0.1:9200"
+    $IndexName = "nessus-$(Get-Date -Format yyyy)" 
+    $ElasticsearchApiKey = ""
+
 }
 
 Process{
@@ -134,17 +152,42 @@ Process{
     #Update Scan status
     function updateStatus{
         #Store the current Nessus Scans and their completing/running status to currentNessusScanData
-        $global:currentNessusScanDataRaw = Invoke-RestMethod -Method Get -Uri "https://$($NessusHostNameOrIP)/scans?folder_id=$($global:sourceFolderId)" -ContentType "application/json" -Headers $headers
+        $global:currentNessusScanDataRaw = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans?folder_id=$($global:sourceFolderId)" -ContentType "application/json" -Headers $headers
         $global:listOfScans = $global:currentNessusScanDataRaw.scans | Select-Object -Property Name,Status,creation_date,id
         If($global:listOfScans){Write-Host "Scans found!" -ForegroundColor Green; $global:listOfScans}else{Write-Host "No scans found." -ForegroundColor Red}
     }
 
     function getScanIdsAndExport{
         updateStatus
-        $global:listOfScans | ForEach-Object {
-            Write-Host "Going to export $($_.name)"
-            export($_.id)
-            Write-Host "Finished export of $($_.name), going to update status..."
+        if($ExportScansFromToday -eq "true"){
+            #Gets current day
+            $getdate = Get-Date -Format "dddd-d"
+            $global:listOfScans | ForEach-Object {
+                if($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate){
+                    Write-Host "Going to export $_"
+                    export($_.id)
+                    Write-Host "Finished export of $_, going to update status..."
+                }
+            }
+        }elseif($null -ne $ExportDay){
+            #Gets day entered from arguments
+            $getDate = $ExportDay | Get-Date -Format "dddd-d"
+            $global:listOfScans | ForEach-Object {
+                if($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate){
+                    Write-Host "Going to export $_"
+                    export($_.id)
+                    Write-Host "Finished export of $_, going to update status..."
+                }else{
+                    Write-Host $_
+                    Write-Host convertToISO($_.creation_date)
+                }
+            }
+        }else{
+            $global:listOfScans | ForEach-Object {
+                Write-Host "Going to export $($_.name)"
+                export($_.id)
+                Write-Host "Finished export of $($_.name), going to update status..."
+            }
         }
     }
 
@@ -152,7 +195,7 @@ Process{
         $body = [PSCustomObject]@{
             folder_id = $archiveFolderId
         } | ConvertTo-Json
-        $ScanDetails = Invoke-RestMethod -Method Put -Uri "https://$($NessusHostNameOrIP)/scans/$($scanId)/folder" -Body $body -ContentType "application/json" -Headers $headers
+        $ScanDetails = Invoke-RestMethod -Method Put -Uri "https://$NessusURLandPort/scans/$($scanId)/folder" -Body $body -ContentType "application/json" -Headers $headers
         Write-Host $ScanDetails -ForegroundColor Red
         Write-Host "Scan Moved to Archive - Export Complete." -ForegroundColor Green
     }
@@ -162,24 +205,24 @@ Process{
         Write-Host $scanId
         do{
             $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
-            $exportFileName = $DownloadFileLocation+$($convertedTime | Get-Date -Format yyyy_MM_dd).ToString() + "-$scanId$($ExtendedFileNameAttribute).nessus"
+            $exportFileName = $DownloadedNessusFileLocation+"\"+$($convertedTime | Get-Date -Format yyyy_MM_dd).ToString() + "-$scanId$($ExtendedFileNameAttribute).nessus"
             $exportComplete = 0
             $currentScanIdStatus = $($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).status
 			#Check to see if scan is not running or is an empty scan, if true then lets export!
-			if($currentScanIdStatus -ne 'running' -or $currentScanIdStatus -ne 'empty'){
-                try
-                {
+			if($currentScanIdStatus -ne 'running' -and $currentScanIdStatus -ne 'empty'){
+                #try
+                #{
                     $scanExportOptions = [PSCustomObject]@{
                         "format" = "nessus"
                     } | ConvertTo-Json
                     #Start the export process to Nessus has the file prepared for download
-                    $exportInfo = Invoke-RestMethod -Method Post "https://$($NessusHostNameOrIP)/scans/$($scanId)/export" -Body $scanExportOptions -ContentType "application/json" -Headers $headers
+                    $exportInfo = Invoke-RestMethod -Method Post "https://$NessusURLandPort/scans/$($scanId)/export" -Body $scanExportOptions -ContentType "application/json" -Headers $headers
                     $exportStatus = ''
                     while ($exportStatus.status -ne 'ready')
                     {
                         try
                         {
-                            $exportStatus = Invoke-RestMethod -Method Get "https://$($NessusHostNameOrIP)/scans/$($ScanId)/export/$($exportInfo.file)/status" -ContentType "application/json" -Headers $headers
+                            $exportStatus = Invoke-RestMethod -Method Get "https://$NessusURLandPort/scans/$($ScanId)/export/$($exportInfo.file)/status" -ContentType "application/json" -Headers $headers
                             Write-Host "Export status: $($exportStatus.status)"
                         }
                         catch
@@ -190,22 +233,22 @@ Process{
                         Start-Sleep -Seconds 1
                     }
                     #Time to download the Nessus scan!
-                    Invoke-RestMethod -Method Get -Uri "https://$($NessusHostNameOrIP)/scans/$($scanId)/export/$($exportInfo.file)/download" -ContentType "application/json" -Headers $headers -OutFile $exportFileName
+                    Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans/$($scanId)/export/$($exportInfo.file)/download" -ContentType "application/json" -Headers $headers -OutFile $exportFileName
                     $exportComplete = 1
                     Write-Host "Export succeeded!" -ForegroundColor Green
                     if($null -ne $ArchiveFolderName){
-		    	#Move scan to archive if folder is configured!
-			Write-Host "Archive scan folder configured so going to move the scan in the Nessus web UI to $ArchiveFolderName" -Foreground Yellow
-			Move-ScanToArchive
-		    }else{
-		    	Write-Host "Archive folder not configured so not moving scan in the Nessus web UI." -Foreground Yellow
-		    }
-                }
-                catch [System.Net.WebException]
-                {
-                    Write-Host 'Nessus Struggles to Export a Scan, exiting.'
-                    exit
-                }
+		    	        #Move scan to archive if folder is configured!
+			            Write-Host "Archive scan folder configured so going to move the scan in the Nessus web UI to $ArchiveFolderName" -Foreground Yellow
+			            Move-ScanToArchive
+		            }else{
+		    	        Write-Host "Archive folder not configured so not moving scan in the Nessus web UI." -Foreground Yellow
+		            }
+                #}
+                #catch [System.Net.WebException]
+                #{
+                #    Write-Host 'Nessus Struggles to Export a Scan, exiting.'
+                #    exit
+                #}
             }
             #If a scan is empty because it hasn't been started skip the export and move on.
             if ($currentScanIdStatus -eq 'empty') {
@@ -235,10 +278,10 @@ Process{
 End{
     Write-Host "Finished Exporting!" -ForegroundColor White
     #Kick of the Nessus Import! Just uncomment the two lines below and provide valid parameters.
-    if(($null -ne $DownloadFileLocation) -and ($null -ne $ElasticsearchURL) -and ($null -ne $IndexName) -and ($null -ne $ElasticsearchApiKey)){
+    if(($null -ne $DownloadedNessusFileLocation) -and ($null -ne $ElasticsearchURL) -and ($null -ne $IndexName) -and ($null -ne $ElasticsearchApiKey)){
         Write-Host "All Elasticsearch variables configured!" -Foreground Green
 	Write-Host "Time to ingest! Kicking off the Automate-NessusImport.ps1 script to ingest this data into Elasticsearch!"
-    	.\Automate-NessusImport.ps1 -DownloadedNessusFileLocation $DownloadFileLocation -ElasticsearchURL $ElasticsearchURL -IndexName $IndexName -ElasticsearchApiKey $ElasticsearchApiKey
+    	.\Automate-NessusImport.ps1 -DownloadedNessusFileLocation $DownloadedNessusFileLocation -ElasticsearchURL $ElasticsearchURL -IndexName $IndexName -ElasticsearchApiKey $ElasticsearchApiKey
     }else{
     	Write-Host "Not all of the Elasticsearch variables were configured to kick off the Automate-NessusImport script. This is the end of this process." -Foreground Yellow
     }
