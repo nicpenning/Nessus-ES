@@ -1,7 +1,7 @@
 <#
 .Synopsis
    Automatically check for any unprocessed .nessus files and call the ImportTo-Elasticsearch.ps1 script to ingest into Elastic.
-   Pairs well with the ImportTo-Elasticsearch-Nessus.ps1 (mostly because it's pretty useless without it!).
+   Pairs well with the ImportTo-Elasticsearch-Nessus.ps1 (mostly because it's pretty useless without it!)!
 .DESCRIPTION
    This script is useful for automating the ingest of Nessus scan files. The script will be able to allow for some customizations
    such as the Elasticsearch host and the location of the Nessus files.
@@ -53,10 +53,10 @@ Process{
         #Check if already processed by name and hash
         if($_.Name -like '*.nessus' -and ($allProcessedHashes -notcontains $($_ | Get-FileHash).Hash)){
             $starting = Get-Date
-            $fileToProcess = $DownloadedNessusFileLocation+$_.Name
-            $markProcessed = $DownloadedNessusFileLocation+$_.Name+".processed"
+            $fileToProcess = $DownloadedNessusFileLocation+"\"+$_.Name
+            $markProcessed = $DownloadedNessusFileLocation+"\"+$_.Name+".processed"
             Write-Host "Going to process $_ now."
-            .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchApiKey $ElasticsearchAPIKey
+            .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchAPIKey $ElasticsearchAPIKey
             $ending = Get-Date
             $duration = $ending - $starting
             $($fileToProcess+'-PSNFscript-'+$duration | Out-File ".\parsedTime.txt" -Append)
