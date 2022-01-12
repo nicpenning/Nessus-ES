@@ -43,7 +43,7 @@ Param
 )
 
 Begin{
-    if($PSVersionTable.PSVersion -lt 7){
+    if($PSVersionTable.PSVersion.Major -lt 7){
     #Trust certs
     add-type @"
     using System.Net;
