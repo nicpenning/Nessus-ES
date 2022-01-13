@@ -63,6 +63,9 @@ Process{
             $($_ | Get-FileHash).Hash.toString() | Add-Content $processedHashesPath
             Write-Host "$fileToProcess processed in $duration"
             Rename-Item -Path $fileToProcess -NewName $markProcessed
+        }else {
+            Write-Host "The file $($_.Name) doesn't end in .nessus or has already been processed in the $ProcessedHashesPath file. This file is used for tracking what files have been ingested to prevent duplicate ingest of data."
+            Write-Host "If it's already been processed and you want to process it again, remove the hash from the $ProcessedHashesPath file or just remove it entirely for a clean slate."
         }
     }
 }
