@@ -124,9 +124,9 @@ Begin{
     getFolderIdFromName $SourceFolderName, $ArchiveFolderName
 
     #Hardcoded Elasticsearch variables
-    $ElasticsearchURL = "http://127.0.0.1:9200"
-    $IndexName = "nessus-$(Get-Date -Format yyyy)" 
-    $ElasticsearchApiKey = ""
+    #$ElasticsearchURL = "http://127.0.0.1:9200"
+    #$IndexName = "nessus-$(Get-Date -Format yyyy)" 
+    #$ElasticsearchApiKey = ""
 
 }
 
