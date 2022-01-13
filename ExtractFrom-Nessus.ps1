@@ -61,17 +61,17 @@ Param
         Position=7)]
     $ExtendedFileNameAttribute,
     # Add Elasticsearch Host to automate Nessus import
-    [Parameter(Mandatory=$false,
+    [Parameter(Mandatory=$true,
         ValueFromPipelineByPropertyName=$true,
         Position=8)]
     $ElasticsearchURL,
     # Add Elasticsearch index name to automate Nessus import
-    [Parameter(Mandatory=$false,
+    [Parameter(Mandatory=$true,
         ValueFromPipelineByPropertyName=$true,
         Position=9)]
     $IndexName,
     # Add Elasticsearch API key to automate Nessus import
-    [Parameter(Mandatory=$false,
+    [Parameter(Mandatory=$true,
         ValueFromPipelineByPropertyName=$true,
         Position=10)]
     $ElasticsearchApiKey,
@@ -88,7 +88,8 @@ Param
 )
 
 Begin{
-    add-type @"
+    if($PSVersionTable.PSVersion.Major -lt 7){
+        add-type @"
     using System.Net;
     using System.Security.Cryptography.X509Certificates;
     public class TrustAllCertsPolicy : ICertificatePolicy {
@@ -101,6 +102,11 @@ Begin{
 "@
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+    }else{
+        $modernPowerShellVersionDetected = "true"
+        Write-Host "PowerShell version $($PSVersionTable.PSVersion.Major) detected, great!"
+    }
+    
     $NessusURLandPort = $NessusHostNameOrIP+":"+$port
     $headers =  @{'X-ApiKeys' = "accessKey=$AccessKey; secretKey=$SecretKey"}
     #Don't parse the file downloads because we care about speed!
@@ -108,12 +114,23 @@ Begin{
     if($null -eq $SourceFolderName ){
         $SourceFolderName = "My Scans"
     }
+
+    #Check to see if export scan directory exists, if not, create it!
+    if($(Test-Path -Path $DownloadedNessusFileLocation) -eq $false){
+        Write-Host "Could not find $DownloadedNessusFileLocation so creating that directory now."
+        New-Item $DownloadedNessusFileLocation -ItemType Directory
+    }
+
     #Get FolderID from Folder name
     function getFolderIdFromName {
         param (
             $folderNames
         )
-        $folders = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/folders" -ContentType "application/json" -Headers $headers
+        if($modernPowerShellVersionDetected -eq "true"){
+            $folders = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/folders" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        }else{
+            $folders = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/folders" -ContentType "application/json" -Headers $headers
+        }
         Write-Host "Folders Found: "
         $folders.folders.Name | ForEach-Object{
             Write-Host "$_" -ForegroundColor Green
@@ -152,7 +169,12 @@ Process{
     #Update Scan status
     function updateStatus{
         #Store the current Nessus Scans and their completing/running status to currentNessusScanData
-        $global:currentNessusScanDataRaw = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans?folder_id=$($global:sourceFolderId)" -ContentType "application/json" -Headers $headers
+        if($modernPowerShellVersionDetected -eq "true"){
+            $global:currentNessusScanDataRaw = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans?folder_id=$($global:sourceFolderId)" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        } else {
+            $global:currentNessusScanDataRaw = Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans?folder_id=$($global:sourceFolderId)" -ContentType "application/json" -Headers $headers
+        }
+        
         $global:listOfScans = $global:currentNessusScanDataRaw.scans | Select-Object -Property Name,Status,creation_date,id
         If($global:listOfScans){Write-Host "Scans found!" -ForegroundColor Green; $global:listOfScans}else{Write-Host "No scans found." -ForegroundColor Red}
     }
@@ -195,7 +217,11 @@ Process{
         $body = [PSCustomObject]@{
             folder_id = $archiveFolderId
         } | ConvertTo-Json
-        $ScanDetails = Invoke-RestMethod -Method Put -Uri "https://$NessusURLandPort/scans/$($scanId)/folder" -Body $body -ContentType "application/json" -Headers $headers
+        if($modernPowerShellVersionDetected -eq "true"){
+            $ScanDetails = Invoke-RestMethod -Method Put -Uri "https://$NessusURLandPort/scans/$($scanId)/folder" -Body $body -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        } else {
+            $ScanDetails = Invoke-RestMethod -Method Put -Uri "https://$NessusURLandPort/scans/$($scanId)/folder" -Body $body -ContentType "application/json" -Headers $headers
+        }
         Write-Host $ScanDetails -ForegroundColor Red
         Write-Host "Scan Moved to Archive - Export Complete." -ForegroundColor Green
     }
@@ -216,7 +242,11 @@ Process{
                         "format" = "nessus"
                     } | ConvertTo-Json
                     #Start the export process to Nessus has the file prepared for download
-                    $exportInfo = Invoke-RestMethod -Method Post "https://$NessusURLandPort/scans/$($scanId)/export" -Body $scanExportOptions -ContentType "application/json" -Headers $headers
+                    if($modernPowerShellVersionDetected -eq "true"){
+                        $exportInfo = Invoke-RestMethod -Method Post "https://$NessusURLandPort/scans/$($scanId)/export" -Body $scanExportOptions -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+                    } else {
+                        $exportInfo = Invoke-RestMethod -Method Post "https://$NessusURLandPort/scans/$($scanId)/export" -Body $scanExportOptions -ContentType "application/json" -Headers $headers
+                    }
                     $exportStatus = ''
                     while ($exportStatus.status -ne 'ready')
                     {
@@ -233,7 +263,11 @@ Process{
                         Start-Sleep -Seconds 1
                     }
                     #Time to download the Nessus scan!
-                    Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans/$($scanId)/export/$($exportInfo.file)/download" -ContentType "application/json" -Headers $headers -OutFile $exportFileName
+                    if($modernPowerShellVersionDetected -eq "true"){
+                        Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans/$($scanId)/export/$($exportInfo.file)/download" -ContentType "application/json" -Headers $headers -OutFile $exportFileName -SkipCertificateCheck
+                    } else {
+                        Invoke-RestMethod -Method Get -Uri "https://$NessusURLandPort/scans/$($scanId)/export/$($exportInfo.file)/download" -ContentType "application/json" -Headers $headers -OutFile $exportFileName
+                    }
                     $exportComplete = 1
                     Write-Host "Export succeeded!" -ForegroundColor Green
                     if($null -ne $ArchiveFolderName){
