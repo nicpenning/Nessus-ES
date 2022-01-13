@@ -12,7 +12,7 @@
    Store this file in the same directory as the ImportTo-Elasticsearch-Nessus.ps1
 
 .EXAMPLE
-   .\Automate-NessusImport.ps1 -DownloadedNessusFileLocation "C:\Nessus" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus" -ElasticsearchApiKey "redacted" 
+   .\Automate-NessusImport.ps1 -DownloadedNessusFileLocation "C:\Nessus" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus-2022" -ElasticsearchApiKey "redacted" 
 #>
 
 [CmdletBinding()]
@@ -43,6 +43,17 @@ Param
 
 Begin{
     $ProcessedHashesPath = "ProcessedHashes.txt"
+    #Check to see if export scan directory exists, if not, create it!
+    if ($false -eq $(Test-Path -Path $DownloadedNessusFileLocation)){
+        Write-Host "Could not find $DownloadedNessusFileLocation so creating that directory now."
+        New-Item $DownloadedNessusFileLocation -ItemType Directory
+    }
+    #Check to see if ProcessedHashses.txt file exists, if not, create it!
+    if ($false -eq $(Test-Path -Path $processedHashesPath)){
+        Write-Host "Could not find $processedHashesPath so creating that file now."
+        New-Item $processedHashesPath
+    }
+    $os = [environment]::OSVersion
 }
 
 Process{
@@ -53,8 +64,13 @@ Process{
         #Check if already processed by name and hash
         if($_.Name -like '*.nessus' -and ($allProcessedHashes -notcontains $($_ | Get-FileHash).Hash)){
             $starting = Get-Date
-            $fileToProcess = $DownloadedNessusFileLocation+"\"+$_.Name
-            $markProcessed = $DownloadedNessusFileLocation+"\"+$_.Name+".processed"
+            if($os.Platform -eq "Unix"){
+                $fileToProcess = $DownloadedNessusFileLocation+"/"+$_.Name
+                $markProcessed = $DownloadedNessusFileLocation+"/"+$_.Name+".processed"
+            }else{
+                $fileToProcess = $DownloadedNessusFileLocation+"\"+$_.Name
+                $markProcessed = $DownloadedNessusFileLocation+"\"+$_.Name+".processed"
+            }
             Write-Host "Going to process $_ now."
             .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchAPIKey $ElasticsearchAPIKey
             $ending = Get-Date
