@@ -11,7 +11,7 @@ The Nessus-ES project is a simplified way of taking .nessus files and ingesting 
 *Never tested
 
 Requirements
-* Functioning ElasticSearch Cluster (7.0+, 7.6.2 Tested)
+* Functioning ElasticSearch Cluster (7.0+, 7.16.2 Tested)
 * PowerShell
 * .nessus File(s) Exported
 
@@ -32,3 +32,5 @@ ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Ne
 
 Here are some other details from the dashboard not pictured above that could also be useful:
 ![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Details_Dashboard.png?raw=true)
+## New VPR Search added to Dashboard!
+![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Details_VPR_Search_Dashboard.png?raw=true)
