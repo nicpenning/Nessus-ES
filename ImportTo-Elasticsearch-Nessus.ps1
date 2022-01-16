@@ -125,7 +125,7 @@ Process{
                     "port" = $r.port
                 }
                 "ecs" = [PSCustomObject]@{
-                    "version" = "1.11"
+                    "version" = "1.5"
                 }                
                 "event" = [PSCustomObject]@{
                     "category" = "host" #Remove later for at ingest enrichment
