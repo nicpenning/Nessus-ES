@@ -25,6 +25,8 @@ Requirements
 ## Future
 - [ ] Add Detection Rules
 - [ ] Add Setup Script (Template, Objects, API, etc..)
+- [ ] Upgrade to ECS 1.12
+- [ ] Revamp Dashboards to use Lens Visuals
 
 ## Added Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
 ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
