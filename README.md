@@ -12,7 +12,7 @@ The Nessus-ES project is a simplified way of taking .nessus files and ingesting 
 
 Requirements
 * Functioning ElasticSearch Cluster (7.0+, 7.16.2 Tested)
-* PowerShell
+* PowerShell 5.0+ (7.0+ is recommended)
 * .nessus File(s) Exported
 
 ## Now
