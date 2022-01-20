@@ -231,6 +231,7 @@ Process{
         Write-Host $scanId
         do{
             $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
+	    $os = [environment]::OSVersion
             if($os.Platform -eq "Unix"){
                 $exportFileName = $DownloadedNessusFileLocation+"/"+$($convertedTime | Get-Date -Format yyyy_MM_dd).ToString() + "-$scanId$($ExtendedFileNameAttribute).nessus"
             }else{
