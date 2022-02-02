@@ -76,7 +76,7 @@ Process{
     $global:AuthenticationHeaders = @{Authorization = "ApiKey $ElasticsearchAPIKey"}
 
     #Create index name
-    if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2021"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
+    if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2022"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
     
     #Now let the magic happen!
     Write-Host "
@@ -243,9 +243,9 @@ Process{
         #$hash
         $ProgressPreference = 'SilentlyContinue'
         try {
-            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders
+            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders
         }catch {
-            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
+            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
         }
         
         #Error checking
