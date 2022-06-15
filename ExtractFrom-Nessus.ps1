@@ -257,7 +257,11 @@ Process{
                     {
                         try
                         {
-                            $exportStatus = Invoke-RestMethod -Method Get "https://$NessusURLandPort/scans/$($ScanId)/export/$($exportInfo.file)/status" -ContentType "application/json" -Headers $headers
+			    if($modernPowerShellVersionDetected -eq "true"){
+                                $exportStatus = Invoke-RestMethod -Method Get "https://$NessusURLandPort/scans/$($ScanId)/export/$($exportInfo.file)/status" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+                            } else {
+                                $exportStatus = Invoke-RestMethod -Method Get "https://$NessusURLandPort/scans/$($ScanId)/export/$($exportInfo.file)/status" -ContentType "application/json" -Headers $headers
+                            }
                             Write-Host "Export status: $($exportStatus.status)"
                         }
                         catch
