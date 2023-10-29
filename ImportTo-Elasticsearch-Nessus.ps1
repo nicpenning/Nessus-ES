@@ -43,40 +43,42 @@ Param
 )
 
 Begin{
-    if($PSVersionTable.PSVersion.Major -lt 7){
-    #Trust certs
-    add-type @"
-    using System.Net;
-    using System.Security.Cryptography.X509Certificates;
-    public class TrustAllCertsPolicy : ICertificatePolicy {
-        public bool CheckValidationResult(
-            ServicePoint srvPoint, X509Certificate certificate,
-            WebRequest request, int certificateProblem) {
-            return true;
-        }
+    if($PSVersionTable.PSVersion.Major -ge 7){
+        Write-Host "PowerShell version $($PSVersionTable.PSVersion.Major) detected, great!"
+    }else{
+        Write-Host "Old version of PowerShell detected $($PSVersionTable.PSVersion.Major). Please install PowerShell 7+. Exiting."Write-Host "No scans found." -ForegroundColor Red
+        Exit
     }
-"@
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy}else{
-    
-    }
-
 
     $ErrorActionPreference = 'Stop'
     $nessus = [xml]''
     $nessus.Load($InputXML)
 }
+
 Process{
     #Elastic Instance (Hard code values here)
     $ElasticsearchIP = '127.0.0.1'
     $ElasticsearchPort = '9200'
-    if($ElasticsearchURL){Write-Host "Using the URL you provided for Elastic: $ElasticsearchURL" -ForegroundColor Green}else{$ElasticsearchURL = "https://"+$ElasticsearchIP+":"+$ElasticsearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticsearchURL)." -ForegroundColor Yellow}
+    if($ElasticsearchURL){
+        Write-Host "Using the URL you provided for Elastic: $ElasticsearchURL" -ForegroundColor Green
+    }else{
+        $ElasticsearchURL = "https://"+$ElasticsearchIP+":"+$ElasticsearchPORT; Write-Host "Running script with manual configuration, will use static variables ($ElasticsearchURL)." -ForegroundColor Yellow
+    }
     #Nessus User Authenitcation Variables for Elastic
-    if($ElasticsearchAPIKey){Write-Host "Using the Api Key you provided." -ForegroundColor Green}else{Write-Host "Elasticsearch API Key Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"; break;}
+    if($ElasticsearchAPIKey){
+        Write-Host "Using the Api Key you provided." -ForegroundColor Green
+    }else{
+        Write-Host "Elasticsearch API Key Required! Go here if you don't know how to obtain one - https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html" -ForegroundColor "Red"
+        break
+    }
     $global:AuthenticationHeaders = @{Authorization = "ApiKey $ElasticsearchAPIKey"}
 
     #Create index name
-    if($Index){Write-Host "Using the Index you provided: $Index" -ForegroundColor Green}else{$Index = "nessus-2022"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow}
+    if($Index){
+        Write-Host "Using the Index you provided: $Index" -ForegroundColor Green
+    }else{
+        $Index = "nessus-2022"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow
+    }
     
     #Now let the magic happen!
     Write-Host "
@@ -221,7 +223,7 @@ Process{
 
             } | ConvertTo-Json -Compress -Depth 5
             
-            $hash += "{`"index`":{`"_index`":`"$Index`"}}`r`n$obj`r`n"
+            $hash += "{`"create`":{`"_index`":`"$Index`"}}`r`n$obj`r`n"
             #$Clean up variables
             $ip = ''
             $fqdn = ''
@@ -242,12 +244,8 @@ Process{
         #Uncomment below to see the hash
         #$hash
         $ProgressPreference = 'SilentlyContinue'
-        try {
-            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders
-        }catch {
-            $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
-        }
-        
+        $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
+
         #Error checking
         #$data.items | ConvertTo-Json -Depth 5
 
