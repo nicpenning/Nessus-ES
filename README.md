@@ -16,12 +16,12 @@ With some careful setup of your Elastic stack and a little PowerShell you can tu
 
 If you are looking for a more robust solution that handles many other vulnerability scanners try this project: https://github.com/HASecuritySolutions/VulnWhisperer
 
-The Nessus-ES project is a simplified way of taking .nessus files and ingesting them into Elastic using PowerShell on Windows, Mac, or Linux
+The Nessus-ES project is a simplified way of taking .nessus files and ingesting them into Elastic using PowerShell on Windows, Mac, or Linux.
 
 Requirements
-* Functioning ElasticSearch Cluster (7.0+, 7.16.2 Tested, 8.10.4 Recommended)
+* Functioning Elastic Stack (7.0+, 8.10.4 Tested)
 * PowerShell 7.0+
-* .nessus File(s) Exported (Script included to export .nessus files!)
+* .nessus File(s) Exported (Script included to export these files!)
 
 ## Now
 - [X] Index Template (How To)
