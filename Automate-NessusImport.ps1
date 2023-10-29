@@ -75,7 +75,11 @@ Process{
             .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchAPIKey $ElasticsearchAPIKey
             $ending = Get-Date
             $duration = $ending - $starting
-            $($fileToProcess+'-PSNFscript-'+$duration | Out-File ".\parsedTime.txt" -Append)
+            if($os.Platform -eq "Unix"){
+                $($fileToProcess+'-PSNFscript-'+$duration | Out-File "./parsedTime.txt" -Append)
+            }else{
+                $($fileToProcess+'-PSNFscript-'+$duration | Out-File ".\parsedTime.txt" -Append)
+            }
             $($_ | Get-FileHash).Hash.toString() | Add-Content $processedHashesPath
             Write-Host "$fileToProcess processed in $duration"
             Rename-Item -Path $fileToProcess -NewName $markProcessed
