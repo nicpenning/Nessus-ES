@@ -19,7 +19,7 @@ The Nessus-ES project is a simplified way of taking .nessus files and ingesting 
 Requirements
 * Functioning ElasticSearch Cluster (7.0+, 7.16.2 Tested, 8.10.4 Recommended)
 * PowerShell 7.0+
-* .nessus File(s) Exported
+* .nessus File(s) Exported (Script included to export .nessus files!)
 
 ## Now
 - [X] Index Template (How To)
@@ -28,16 +28,16 @@ Requirements
 - [X] Documentation ([Wiki](https://github.com/nicpenning/Nessus-ES/wiki))
 - [X] Automated Nessus File Download Script
 - [X] Automated Ingest
+- [X] Create a release
 
 ## Future
+- [ ] Migrate to Data Stream (logs-*)
+- [ ] Cleanup unnecessary mappings
+- [ ] Migrate most enrichments to Ingest Pipelines
 - [ ] Add Detection Rules
 - [ ] Add Setup Script (Template, Objects, API, etc..)
 - [ ] Upgrade to latest ECS
 - [ ] Revamp Dashboards to use Lens Visuals
-- [ ] Create a release for easier deployment
-- [ ] Migrate to Data Stream (logs-*)
-- [ ] Cleanup unnecessary mappings
-- [ ] Migrate most enrichments to Ingest Pipelines
 
 ## Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
 ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
