@@ -33,13 +33,8 @@ Requirements
 - [X] Create a release
 
 ## Future
-- [ ] Migrate to Data Stream (logs-*)
-- [ ] Cleanup unnecessary mappings
-- [ ] Migrate most enrichments to Ingest Pipelines
 - [ ] Add Detection Rules
 - [ ] Add Setup Script (Template, Objects, API, etc..)
-- [ ] Upgrade to latest ECS
-- [ ] Revamp Dashboards to use Lens Visuals
 
 ## Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
 ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
