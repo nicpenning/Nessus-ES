@@ -1,4 +1,4 @@
-# 🚧Nessus-ES🚧Revamping, proceed with caution⚠️ 
+# Nessus-ES
 [![Downloads](https://img.shields.io/github/downloads/nicpenning/Nessus-ES/total.svg)]()
 
 Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch with most of the ECS mappings.
