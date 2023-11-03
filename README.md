@@ -12,7 +12,7 @@ Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch w
 ```
 
 With some careful setup of your Elastic stack and a little PowerShell you can turn your .nessus files into this:
-![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Dashboard.png)
+![image](https://github.com/nicpenning/Nessus-ES/assets/5582679/746d143d-ff1a-4077-82c2-03e229f59bbf)
 
 If you are looking for a more robust solution that handles many other vulnerability scanners try this project: https://github.com/HASecuritySolutions/VulnWhisperer
 
@@ -39,9 +39,4 @@ Requirements
 ## Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
 ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
 
-
-Here are some other details from the dashboard not pictured above that could also be useful:
-![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Details_Dashboard.png?raw=true)
-
-## VPR Search in Dashboard
-![](https://github.com/nicpenning/Nessus-ES/blob/master/Nessus_Details_VPR_Search_Dashboard.png?raw=true)
+## Full dashboard preview
