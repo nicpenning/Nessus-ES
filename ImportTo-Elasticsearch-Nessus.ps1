@@ -175,7 +175,16 @@ Process{
                     "rdns" = $rdns
                     "name_of_host" = $n.name.ToLower()
                     "cvss" = [PSCustomObject]@{
-                        "vector" = $r.cvss_vector
+                        "vector" = if($r.cvss_vector){$r.cvss_vector}else{$null}
+                        "base_score" = if($r.cvss_base_score){$r.cvss_base_score}else{$null}
+                        "impact_score" = if($r.cvss_impactScore){$r.cvss_impactScore}else{$null}
+                        "temporal_score" = if($r.cvss_temporal_score){$r.cvss_temporal_score}else{$null}
+                    }
+                    "cvss3" = [PSCustomObject]@{
+                        "vector" = if($r.cvss3_vector){$r.cvss3_vector}else{$null}
+                        "base_score" = if($r.cvss3_base_score){$r.cvss3_base_score}else{$null}
+                        "impact_score" = if($r.cvssV3_impactScore){$r.cvssV3_impactScore}else{$null}
+                        "temporal_score" = if($r.cvss3_temporal_score){$r.cvss3_temporal_score}else{$null}
                     }
                     "plugin" = [PSCustomObject]@{
                         "id" = $r.pluginID
@@ -198,6 +207,7 @@ Process{
                         "sources_last_28" = if($r.threat_sources_last_28){$r.threat_sources_last_28}else{$null}
                     }
                     "vuln_publication_date" = if($r.vuln_publication_date){$r.vuln_publication_date}else{$null}
+                    "product_coverage" = if($r.product_coverage){$r.product_coverage}else{$null}
                 }
                 "network" = [PSCustomObject]@{
                     "transport" = $r.protocol
