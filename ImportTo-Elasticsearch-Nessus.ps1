@@ -9,11 +9,10 @@
 
    How to create and use an API key for Elastic can be found here: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
 
-   Tested for Elastic Stack 7.6.1 - Should work on 7.0+, not tested on older clusters.
+   Tested for Elastic Stack 8.10.4 - Should work on 7.0+, not tested on older clusters.
 
-   Use -DomainName if you have Winlogbeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer Winlogbeat.
 .EXAMPLE
-   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "logs-nessus.vulnerability" -ElasticsearchAPIKey "redacted" -DomainName "organization.local"
+   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "logs-nessus.vulnerability" -ElasticsearchAPIKey "redacted"
 #>
 
 [CmdletBinding()]
