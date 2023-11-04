@@ -53,7 +53,6 @@ Begin{
         Write-Host "Could not find $processedHashesPath so creating that file now."
         New-Item $processedHashesPath
     }
-    $os = [environment]::OSVersion
 }
 
 Process{
@@ -64,22 +63,13 @@ Process{
         #Check if already processed by name and hash
         if($_.Name -like '*.nessus' -and ($allProcessedHashes -notcontains $($_ | Get-FileHash).Hash)){
             $starting = Get-Date
-            if($os.Platform -eq "Unix"){
-                $fileToProcess = $DownloadedNessusFileLocation+"/"+$_.Name
-                $markProcessed = $DownloadedNessusFileLocation+"/"+$_.Name+".processed"
-            }else{
-                $fileToProcess = $DownloadedNessusFileLocation+"\"+$_.Name
-                $markProcessed = $DownloadedNessusFileLocation+"\"+$_.Name+".processed"
-            }
+            $fileToProcess = Join-Path $DownloadedNessusFileLocation -ChildPath $_.Name
+            $markProcessed = "$fileToProcess.processed"
             Write-Host "Going to process $_ now."
-            .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchAPIKey $ElasticsearchAPIKey
+            & $(Resolve-Path ImportTo-Elasticsearch-Nessus.ps1).path -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchAPIKey $ElasticsearchAPIKey
             $ending = Get-Date
             $duration = $ending - $starting
-            if($os.Platform -eq "Unix"){
-                $($fileToProcess+'-PSNFscript-'+$duration | Out-File "./parsedTime.txt" -Append)
-            }else{
-                $($fileToProcess+'-PSNFscript-'+$duration | Out-File ".\parsedTime.txt" -Append)
-            }
+            $($fileToProcess+'-PSNFscript-'+$duration | Out-File $(Resolve-Path parsedTime.txt).Path -Append)
             $($_ | Get-FileHash).Hash.toString() | Add-Content $processedHashesPath
             Write-Host "$fileToProcess processed in $duration"
             Rename-Item -Path $fileToProcess -NewName $markProcessed
