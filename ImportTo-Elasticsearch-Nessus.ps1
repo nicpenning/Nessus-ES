@@ -230,7 +230,7 @@ Process{
 
             } | ConvertTo-Json -Compress -Depth 5
             
-            $hash += "{`"create`":{`"_index`":`"$Index`"}}`r`n$obj`r`n"
+            $hash += "{`"create`":{ } }`r`n$obj`r`n"
             #$Clean up variables
             $ip = ''
             $fqdn = ''
@@ -251,7 +251,7 @@ Process{
         #Uncomment below to see the hash
         #$hash
         $ProgressPreference = 'SilentlyContinue'
-        $data = Invoke-RestMethod -Uri "$ElasticsearchURL/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
+        $data = Invoke-RestMethod -Uri "$ElasticsearchURL/$Index/_bulk" -Method POST -ContentType "application/x-ndjson; charset=utf-8" -body $hash -Headers $global:AuthenticationHeaders -SkipCertificateCheck
 
         #Error checking
         #$data.items | ConvertTo-Json -Depth 5
