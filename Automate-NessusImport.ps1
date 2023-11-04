@@ -12,7 +12,7 @@
    Store this file in the same directory as the ImportTo-Elasticsearch-Nessus.ps1
 
 .EXAMPLE
-   .\Automate-NessusImport.ps1 -DownloadedNessusFileLocation "C:\Nessus" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus-2022" -ElasticsearchApiKey "redacted" 
+   .\Automate-NessusImport.ps1 -DownloadedNessusFileLocation "C:\Nessus" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "logs-nessus.vulnerability" -ElasticsearchApiKey "redacted" 
 #>
 
 [CmdletBinding()]
