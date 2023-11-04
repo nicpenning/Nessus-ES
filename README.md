@@ -3,7 +3,6 @@
 Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch with most of the ECS mappings.
 
 ```mermaid
-%% Example of sequence diagram
   sequenceDiagram
     PowerShell->>Nessus: Downloads .Nessus File(s) via Nessus API
     Nessus->>PowerShell: .nessus File(s) Saved Locally
