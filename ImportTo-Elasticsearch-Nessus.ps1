@@ -13,7 +13,7 @@
 
    Use -DomainName if you have Winlogbeat agents older than 7.6.0 and you want to use the SIEM App Hosts section. Ignore this setting if you are running 7.6.0 and newer Winlogbeat.
 .EXAMPLE
-   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "nessus" -ElasticsearchAPIKey "redacted" -DomainName "organization.local"
+   .\ImportTo-Elasticsearch-Nessus.ps1 -InputXML "C:\folder\file.nessus" -ElasticsearchURL "https://localhost:9200" -Index "logs-nessus.vulnerability" -ElasticsearchAPIKey "redacted" -DomainName "organization.local"
 #>
 
 [CmdletBinding()]
@@ -77,7 +77,7 @@ Process{
     if($Index){
         Write-Host "Using the Index you provided: $Index" -ForegroundColor Green
     }else{
-        $Index = "nessus-2022"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow
+        $Index = "logs-nessus.vulnerability"; Write-Host "No Index was entered, using the default value of $Index" -ForegroundColor Yellow
     }
     
     #Now let the magic happen!
