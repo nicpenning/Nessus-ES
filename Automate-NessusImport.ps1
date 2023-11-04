@@ -64,7 +64,7 @@ Process{
         if($_.Name -like '*.nessus' -and ($allProcessedHashes -notcontains $($_ | Get-FileHash).Hash)){
             $starting = Get-Date
             $fileToProcess = Join-Path $DownloadedNessusFileLocation -ChildPath $_.Name
-            $markProcessed = "$fileToProcess.processed"
+            $markProcessed = "$($_.Name).processed"
             Write-Host "Going to process $_ now."
             & $(Resolve-Path ImportTo-Elasticsearch-Nessus.ps1).path -InputXML $fileToProcess -ElasticsearchURL $ElasticsearchURL -Index $IndexName -ElasticsearchAPIKey $ElasticsearchAPIKey
             $ending = Get-Date
