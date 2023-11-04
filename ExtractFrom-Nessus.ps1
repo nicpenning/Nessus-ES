@@ -211,12 +211,7 @@ Process{
         Write-Host $scanId
         do{
             $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
-	    $os = [environment]::OSVersion
-            if($os.Platform -eq "Unix"){
-                $exportFileName = $DownloadedNessusFileLocation+"/"+$($convertedTime | Get-Date -Format yyyy_MM_dd).ToString() + "-$scanId$($ExtendedFileNameAttribute).nessus"
-            }else{
-                $exportFileName = $DownloadedNessusFileLocation+"\"+$($convertedTime | Get-Date -Format yyyy_MM_dd).ToString() + "-$scanId$($ExtendedFileNameAttribute).nessus"
-            }
+            $exportFileName = Join-Path $DownloadedNessusFileLocation $($($convertedTime | Get-Date -Format yyyy_MM_dd).ToString()+"-$scanId$($ExtendedFileNameAttribute).nessus")
             $exportComplete = 0
             $currentScanIdStatus = $($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).status
 			#Check to see if scan is not running or is an empty scan, if true then lets export!
@@ -282,11 +277,7 @@ End{
     if(($null -ne $DownloadedNessusFileLocation) -and ($null -ne $ElasticsearchURL) -and ($null -ne $IndexName) -and ($null -ne $ElasticsearchApiKey)){
         Write-Host "All Elasticsearch variables configured!" -Foreground Green
 	    Write-Host "Time to ingest! Kicking off the Automate-NessusImport.ps1 script to ingest this data into Elasticsearch!"    
-        if($os.Platform -eq "Unix"){
-            ./Automate-NessusImport.ps1 -DownloadedNessusFileLocation $DownloadedNessusFileLocation -ElasticsearchURL $ElasticsearchURL -IndexName $IndexName -ElasticsearchApiKey $ElasticsearchApiKey
-        }else{
-            .\Automate-NessusImport.ps1 -DownloadedNessusFileLocation $DownloadedNessusFileLocation -ElasticsearchURL $ElasticsearchURL -IndexName $IndexName -ElasticsearchApiKey $ElasticsearchApiKey
-        }
+        & $(Resolve-Path Automate-NessusImport.ps1).path -DownloadedNessusFileLocation $DownloadedNessusFileLocation -ElasticsearchURL $ElasticsearchURL -IndexName $IndexName -ElasticsearchApiKey $ElasticsearchApiKey
     }else{
     	Write-Host "Not all of the Elasticsearch variables were configured to kick off the Automate-NessusImport script. This is the end of this process." -Foreground Yellow
     }
