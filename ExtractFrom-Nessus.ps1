@@ -13,7 +13,7 @@
    Tested for Nessus 8.9.0+.
 
 .EXAMPLE
-   .\ExtractFrom-Nessus.ps1 -NessusHostNameOrIP "127.0.0.1" -Port "8834" -DownloadedNessusFileLocation "C:\Nessus" -AccessKey "redacted" -SecretKey "redacted" -SourceFolderName "My Scans" -ArchiveFolderName "Archive-Ingested" -ExtendedFileNameAttribute "_scanner1" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "nessus" -ElasticsearchApiKey "redacted" -ExportScansFromToday "false" -ExportDay "01/11/2021"
+   .\ExtractFrom-Nessus.ps1 -NessusHostNameOrIP "127.0.0.1" -Port "8834" -DownloadedNessusFileLocation "C:\Nessus" -AccessKey "redacted" -SecretKey "redacted" -SourceFolderName "My Scans" -ArchiveFolderName "Archive-Ingested" -ExtendedFileNameAttribute "_scanner1" -ElasticsearchURL "http://127.0.0.1:9200" -IndexName "logs-nessus.vulnerability" -ElasticsearchApiKey "redacted" -ExportScansFromToday "false" -ExportDay "01/11/2021"
 #>
 
 [CmdletBinding()]
@@ -127,7 +127,7 @@ Begin{
 
     #Hardcoded Elasticsearch variables
     #$ElasticsearchURL = "http://127.0.0.1:9200"
-    #$IndexName = "nessus-$(Get-Date -Format yyyy)" 
+    #$IndexName = "logs-nessus.vulnerability" 
     #$ElasticsearchApiKey = ""
 
 }
