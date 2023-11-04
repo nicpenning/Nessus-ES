@@ -125,9 +125,6 @@ Process{
                 "@timestamp" = $hostStart #Remove later for at ingest enrichment
                 "destination" = [PSCustomObject]@{
                     "port" = $r.port
-                }
-                "ecs" = [PSCustomObject]@{
-                    "version" = "1.5"
                 }                
                 "event" = [PSCustomObject]@{
                     "category" = "host" #Remove later for at ingest enrichment
