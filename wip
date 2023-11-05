@@ -364,10 +364,13 @@ Begin{
 Process {
 
     while ($true -ne $finished) {
-        Show-Menu
-        $choice = Read-Host "Enter your choice"
+        # Show Menu if script was not provided the choice on execution using the Option_Selected variable
+        if($null -eq $Option_Selected){
+            Show-Menu
+            $Option_Selected = Read-Host "Enter your choice"
+        }
     
-        switch ($choice) {
+        switch ($Option_Selected) {
             '1' {
                 Write-Host "You selected Option $option1"
                 ExtractFrom-Nessus
