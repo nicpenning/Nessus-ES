@@ -117,35 +117,6 @@ Begin{
         Write-Host "Old version of PowerShell detected $($PSVersionTable.PSVersion.Major). Please install PowerShell 7+. Exiting."Write-Host "No scans found." -ForegroundColor Red
         Exit
     }
-    
-    $headers =  @{'X-ApiKeys' = "accessKey=$Nessus_Access_Key; secretKey=$Nessus_Secret_Key"}
-    #Don't parse the file downloads because we care about speed!
-    $ProgressPreference = 'SilentlyContinue'
-    if($null -eq $Nessus_Source_Folder_Name ){
-        $Nessus_Source_Folder_Name = "My Scans"
-    }
-
-    #Check to see if export scan directory exists, if not, create it!
-    if($(Test-Path -Path $Nessus_File_Download_Location) -eq $false){
-        Write-Host "Could not find $Nessus_File_Download_Location so creating that directory now."
-        New-Item $Nessus_File_Download_Location -ItemType Directory
-    }
-
-    #Get FolderID from Folder name
-    function getFolderIdFromName {
-        param (
-            $folderNames
-        )
-
-        $folders = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/folders" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
-        Write-Host "Folders Found: "
-        $folders.folders.Name | ForEach-Object{
-            Write-Host "$_" -ForegroundColor Green
-        }
-        $global:sourceFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[0]}).id
-        $global:archiveFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[1]}).id
-    }
-    getFolderIdFromName $Nessus_Source_Folder_Name, $Nessus_Archive_Folder_Name
 
     function Show-Menu {
         $option1 = "1. Export Nessus files."
@@ -210,6 +181,36 @@ Begin{
             Position=8)]
             $Export_Custom_Extended_File_Name_Attribute
         )
+
+    $headers =  @{'X-ApiKeys' = "accessKey=$Nessus_Access_Key; secretKey=$Nessus_Secret_Key"}
+    #Don't parse the file downloads because we care about speed!
+    $ProgressPreference = 'SilentlyContinue'
+    if($null -eq $Nessus_Source_Folder_Name ){
+        $Nessus_Source_Folder_Name = "My Scans"
+    }
+
+    #Check to see if export scan directory exists, if not, create it!
+    if($(Test-Path -Path $Nessus_File_Download_Location) -eq $false){
+        Write-Host "Could not find $Nessus_File_Download_Location so creating that directory now."
+        New-Item $Nessus_File_Download_Location -ItemType Directory
+    }
+
+    #Get FolderID from Folder name
+    function getFolderIdFromName {
+        param (
+            $folderNames
+        )
+
+        $folders = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/folders" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        Write-Host "Folders Found: "
+        $folders.folders.Name | ForEach-Object{
+            Write-Host "$_" -ForegroundColor Green
+        }
+        $global:sourceFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[0]}).id
+        $global:archiveFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[1]}).id
+    }
+    getFolderIdFromName $Nessus_Source_Folder_Name, $Nessus_Archive_Folder_Name
+
         #Simple epoch to ISO8601 Timestamp converter
         function convertToISO {
             Param($epochTime)
