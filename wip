@@ -45,68 +45,55 @@ Param
 (
     # Nessus Host Name or IP Address and port; Default port is 8834
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=0)]
+    ValueFromPipelineByPropertyName=$true)]
     $Nessus_URL,
     # The location where you wish to save the extracted Nessus files from the scanner
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=1)]
+    ValueFromPipelineByPropertyName=$true)]
     $Nessus_File_Download_Location,
     # Nessus Access Key
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=2)]
+    ValueFromPipelineByPropertyName=$true)]
     $Nessus_Access_Key,
     # Nessus Secret Key
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=3)]
+    ValueFromPipelineByPropertyName=$true)]
     $Nessus_Secret_Key,
     # The source folder for where the Nessus scans live in the UI. The Default is "My Scans"
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=4)]
+    ValueFromPipelineByPropertyName=$true)]
     $Nessus_Source_Folder_Name,
     # The destination folder in Nessus UI for where you wish to move your scans for archive. If this is not configued, scans will not be moved after download.
-        [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=5)]
+    [Parameter(Mandatory=$false,
+    ValueFromPipelineByPropertyName=$true)]
     $Nessus_Archive_Folder_Name,
     # Use this setting if you wish to only export the scans on the day the scan occurred. Default value is false.
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=6)]
+    ValueFromPipelineByPropertyName=$true)]
     $Export_Scans_From_Today,
     # Use this setting if you want to export scans for the specific day that the scan or scans occurred.
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=7)]
+    ValueFromPipelineByPropertyName=$true)]
     $Export_Day,
     # Added atrribute for the end of the file name for uniqueness when using with multiple scanners
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=8)]
+    ValueFromPipelineByPropertyName=$true)]
     $Export_Custom_Extended_File_Name_Attribute,
     # Add Elasticsearch Host to automate Nessus import
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=9)]
+    ValueFromPipelineByPropertyName=$true)]
     $Elasticsearch_URL,
     # Add Elasticsearch index name to automate Nessus import
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=10)]
+    ValueFromPipelineByPropertyName=$true)]
     $Elasticsearch_Index_Name,
     # Add Elasticsearch API key to automate Nessus import
     [Parameter(Mandatory=$false,
-        ValueFromPipelineByPropertyName=$true,
-        Position=11)]
+    ValueFromPipelineByPropertyName=$true)]
     $Elasticsearch_Api_Key,
     # Selected option for automation
     [Parameter(Mandatory=$false,
-    ValueFromPipelineByPropertyName=$true,
-        Position=12)]
+    ValueFromPipelineByPropertyName=$true)]
     $Option_Selected
 )
 
@@ -137,51 +124,42 @@ Begin{
         Param(
             # Nessus Host Name or IP Address and port; Default port is 8834
             [Parameter(Mandatory=$true,
-            ValueFromPipelineByPropertyName=$true,
-            Position=0)]
+            ValueFromPipelineByPropertyName=$true)]
             $Nessus_URL,
             # The location where you wish to save the extracted Nessus files from the scanner
             [Parameter(Mandatory=$true,
-            ValueFromPipelineByPropertyName=$true,
-            Position=1)]
+            ValueFromPipelineByPropertyName=$true)]
             $Nessus_File_Download_Location,
             # Nessus Access Key
             [Parameter(Mandatory=$true,
-            ValueFromPipelineByPropertyName=$true,
-            Position=2)]
+            ValueFromPipelineByPropertyName=$true)]
             $Nessus_Access_Key,
             # Nessus Secret Key
             [Parameter(Mandatory=$true,
-            ValueFromPipelineByPropertyName=$true,
-            Position=3)]
+            ValueFromPipelineByPropertyName=$true)]
             $Nessus_Secret_Key,
             # The source folder for where the Nessus scans live in the UI. The Default is "My Scans"
             [Parameter(Mandatory=$false,
-            ValueFromPipelineByPropertyName=$true,
-            Position=4)]
+            ValueFromPipelineByPropertyName=$true)]
             $Nessus_Source_Folder_Name,
             # The destination folder in Nessus UI for where you wish to move your scans for archive. If this is not configued, scans will not be moved after download.
             [Parameter(Mandatory=$false,
-            ValueFromPipelineByPropertyName=$true,
-            Position=5)]
+            ValueFromPipelineByPropertyName=$true)]
             $Nessus_Archive_Folder_Name,
             # Use this setting if you wish to only export the scans on the day the scan occurred. Default value is false.
             [Parameter(Mandatory=$false,
-            ValueFromPipelineByPropertyName=$true,
-            Position=6)]
+            ValueFromPipelineByPropertyName=$true)]
             $Export_Scans_From_Today,
             # Use this setting if you want to export scans for the specific day that the scan or scans occurred.
             [Parameter(Mandatory=$false,
-            ValueFromPipelineByPropertyName=$true,
-            Position=7)]
+            ValueFromPipelineByPropertyName=$true)]
             $Export_Day,
             # Added atrribute for the end of the file name for uniqueness when using with multiple scanners
             [Parameter(Mandatory=$false,
-            ValueFromPipelineByPropertyName=$true,
-            Position=8)]
+            ValueFromPipelineByPropertyName=$true)]
             $Export_Custom_Extended_File_Name_Attribute
         )
-
+#>
         $headers =  @{'X-ApiKeys' = "accessKey=$Nessus_Access_Key; secretKey=$Nessus_Secret_Key"}
         #Don't parse the file downloads because we care about speed!
         $ProgressPreference = 'SilentlyContinue'
