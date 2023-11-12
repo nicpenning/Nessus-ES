@@ -29,13 +29,14 @@ Requirements
 - [X] Automated Nessus File Download Script
 - [X] Automated Ingest
 - [X] Create a release
+- [X] Add Setup Script (Template, Objects, API, etc..)
 
 ## Future
 - [ ] Add Detection Rules
-- [ ] Add Setup Script (Template, Objects, API, etc..)
 
-## Automated Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
-ExtractFrom-Nessus.ps1 -> Automate-NessusImport.ps1 -> ImportTo-Elasticsearch-Nessus.ps1
+
+## Automated or Manual Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
+Invoke-NessusTo-Elastic.ps1
 
 ## Full dashboard preview
 https://github.com/nicpenning/Nessus-ES/assets/5582679/448505f5-7991-4554-b199-412dd5351329
