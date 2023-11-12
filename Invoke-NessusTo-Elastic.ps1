@@ -100,7 +100,7 @@ Begin{
         $option3 = "3. Export and Ingest Nessus files into Elastic."
         $option4 = "4. Setup Elasticsearch and Kibana."
         $quit = "Q. Quit"
-        $version = "`nVersion 0.3.0"
+        $version = "`nVersion 0.4.0"
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
         Write-Host "What would you like to do?" -ForegroundColor Yellow
         Write-Host $option1
@@ -351,6 +351,13 @@ Begin{
             $Elasticsearch_Index_Name = "logs-nessus.vulnerability"; Write-Host "No Index was entered, using the default value of $Elasticsearch_Index_Name" -ForegroundColor Yellow
         }
         
+        function convertEpochSecondsToISO {
+            Param($epochTime)
+            $dateTime = [System.DateTimeOffset]::FromUnixTimeMilliseconds($epochTime).DateTime
+            $newTime = Get-Date $dateTime -Format "o"
+            return $newTime
+        }
+
         #Now let the magic happen!
         Write-Host "
         Starting ingest of $Nessus_XML_File.
@@ -388,10 +395,14 @@ Begin{
                     }
                 }
                 #Convert seconds to milliseconds
-                $hostStart = [int]$hostStart*1000
-                $hostEnd = [int]$hostEnd*1000
-                #Convert milliseconds to nano seconds
-                $duration = $(($hostEnd - $hostStart)*1000000)
+                $hostStart = $([int]$hostStart*1000)
+                $hostEnd =  $([int]$hostEnd*1000)
+                #Create duration and convert milliseconds to nano seconds
+                $duration =  $(($hostEnd - $hostStart)*1000000)
+
+                #Convert start and end dates to ISO
+                $hostStart = convertEpochSecondsToISO $hostStart
+                $hostEnd = convertEpochSecondsToISO $hostEnd
 
                 $obj = [PSCustomObject]@{
                     "@timestamp" = $hostStart #Remove later for at ingest enrichment
@@ -558,6 +569,12 @@ Begin{
             Write-Host "Could not find $processedHashesPath so creating that file now."
             New-Item $processedHashesPath
         }
+        
+        #Check to see if parsedTime.txt file exists, if not, create it!
+        if ($false -eq $(Test-Path -Path "parsedTime.txt")) {
+            Write-Host "Could not find parsedTime.txt so creating that file now."
+            New-Item "parsedTime.txt"
+        }
 
         #Start ingesting 1 by 1!
         $allFiles = Get-ChildItem -Path $Nessus_File_Download_Location
@@ -640,8 +657,6 @@ Process {
                     $Nessus_Secret_Key = Read-Host "Nessus Secret Key"
                 }
 
-                Invoke-Exract_From_Nessus -Nessus_URL $Nessus_URL -Nessus_File_Download_Location $Nessus_File_Download_Location -Nessus_Access_Key $Nessus_Access_Key -Nessus_Secret_Key $Nessus_Secret_Key -Nessus_Source_Folder_Name $Nessus_Source_Folder_Name -Nessus_Archive_Folder_Name $Nessus_Archive_Folder_Name -Export_Scans_From_Today $Export_Scans_From_Today -Export_Day $Export_Day -Export_Custom_Extended_File_Name_Attribute $Export_Custom_Extended_File_Name_Attribute
-                
                 #Check for Elasticsearch URL and API Keys and prompt if not provided
                 if($null -eq $Elasticsearch_URL){
                     $Elasticsearch_URL = Read-Host "Elasticsearch URL (https://127.0.0.1:9200)"
@@ -650,7 +665,10 @@ Process {
                     $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
                 }
 
+                Invoke-Exract_From_Nessus -Nessus_URL $Nessus_URL -Nessus_File_Download_Location $Nessus_File_Download_Location -Nessus_Access_Key $Nessus_Access_Key -Nessus_Secret_Key $Nessus_Secret_Key -Nessus_Source_Folder_Name $Nessus_Source_Folder_Name -Nessus_Archive_Folder_Name $Nessus_Archive_Folder_Name -Export_Scans_From_Today $Export_Scans_From_Today -Export_Day $Export_Day -Export_Custom_Extended_File_Name_Attribute $Export_Custom_Extended_File_Name_Attribute
+
                 Invoke-Automate_Nessus_File_Imports -Nessus_File_Download_Location $Nessus_File_Download_Location -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
+                
                 $finished = $true
             }
             '4' {
@@ -734,7 +752,7 @@ Process {
                 $createAPIKeyURL = $Elasticsearch_URL+"/_security/api_key"
                 try { 
                     $createAPIKey = Invoke-RestMethod -Method PUT -Uri $createAPIKeyURL -Body $logsNessusAPIKeyJSON -ContentType "application/json" -Credential $Elasticsearch_Credentials -AllowUnencryptedAuthentication -SkipCertificateCheck
-                    if ($createAPIKey.acknowledged -eq $true) {
+                    if ($createAPIKey.encoded) {
                         Write-Host "The Nessus API key was successfully created!" -ForegroundColor Green
                         Write-Host "Here is your encoded API Key that can be used to ingest your Nessus scan data into the $($createApiKey.name) data stream.`nStore in a safe place: $($createApiKey.encoded)"
                     } else {
