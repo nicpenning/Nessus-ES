@@ -22,6 +22,9 @@ Requirements
 * PowerShell 7.0+ (7.3.8 Tested)
 * .nessus File(s) Exported (Script included to export these files!)
 
+Script now includes a Menu to help you through the process to use this tool:
+![image](https://github.com/nicpenning/Nessus-ES/assets/5582679/eeaad4f9-d48c-4a84-9c4d-82338ba3f648)
+
 ## Now
 - [X] Index Template (How To)
 - [X] Index Pattern, Searches, Visualizations, and Dashboards
