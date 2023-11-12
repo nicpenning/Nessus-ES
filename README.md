@@ -6,6 +6,7 @@ Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch w
   sequenceDiagram
     PowerShell->>Nessus: Downloads .Nessus File(s) via Nessus API
     Nessus->>PowerShell: .nessus File(s) Saved Locally
+    PowerShell->>Kibana: Dashboards, Index Templates and other Setup items
     PowerShell->>Elasticsearch: Ingest Parsed XML Data via Elasticsearch API
 ```
 
