@@ -98,13 +98,15 @@ Begin{
         $option1 = "1. Export Nessus files."
         $option2 = "2. Ingest Nessus files into Elastic."
         $option3 = "3. Export and Ingest Nessus files into Elastic."
+        $option4 = "4. Setup Elasticsearch and Kibana."
         $quit = "Q. Quit"
-        $version = "`nVersion 0.3.0"
+        $version = "`nVersion 0.4.0"
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
         Write-Host "What would you like to do?" -ForegroundColor Yellow
         Write-Host $option1
         Write-Host $option2
         Write-Host $option3
+        Write-Host $option4
         Write-Host $quit
         Write-Host $version
     }
@@ -291,11 +293,11 @@ Begin{
         }
 
         $x = 3
-        do{
+        do {
             getScanIdsAndExport
             #Stop Nessus to get a fresh start
-            if ($global:currentNessusScanData.Status -notcontains 'running'){
-            }else{
+            if ($global:currentNessusScanData.Status -notcontains 'running') {
+            } else {
                 Write-Host 'Nessus has issues, investigate now!'
             }
             $x = 1
@@ -649,6 +651,99 @@ Process {
                 }
 
                 Invoke-Automate_Nessus_File_Imports -Nessus_File_Download_Location $Nessus_File_Download_Location -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
+                $finished = $true
+            }
+            '4' {
+                Write-Host "You selected Option $option4"
+                
+                #Check for Elasticserach URL, Kibana Url, and elastic credentials
+                $Elasticsearch_URL = Read-Host "Elasticsearch URL"
+                $Kibana_URL = Read-Host "Kibana URL"
+                $Elasticsearch_Credentials = Get-Credential elastic
+                $Elasticsearch_Credentials_Base64 = [convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($($Elasticsearch_Credentials.UserName+":"+$($Elasticsearch_Credentials.Password | ConvertFrom-SecureString -AsPlainText)).ToString()))
+                $Kibana_Credentials = "Basic $Elasticsearch_Credentials_Base64"
+
+                #Import Ingest Pipelines
+                Write-Host "Setting up customized Nessus Elasticsearch ingest pipeline." -ForegroundColor Blue
+                $pipelineName = "logs-nessus.vulnerability"
+                $ingestPipelineJSON = Get-Content $(Join-Path .\pipelines -ChildPath "$pipelineName.json")
+                $ingestPipelineURL = $Elasticsearch_URL+"/_ingest/pipeline/"+$pipelineName
+                try { 
+                    $createPipeline = Invoke-RestMethod -Method PUT -Uri $ingestPipelineURL -Body $ingestPipelineJSON -ContentType "application/json" -Credential $Elasticsearch_Credentials -AllowUnencryptedAuthentication -SkipCertificateCheck
+                    if ($createPipeline.acknowledged -eq $true) {
+                        Write-Host "The pipeline $pipelineName was successfully created!" -ForegroundColor Green
+                        Write-Host "Check it out here: $Kibana_URL/app/management/ingest/ingest_pipelines/?pipeline=$pipelineName" -ForegroundColor Blue
+                    } else {
+                        Write-Host "Pipeline failed to get created."
+                    }
+                } catch {
+                    Write-Host "Couldn't add ingest pipeline, likely because it already exists. Check kibana to see if the ingest pipeline $pipelineName exists." -ForegroundColor Yellow
+                }
+
+                #Import Index Template
+                Write-Host "Setting up customized Elasticsearch index template." -ForegroundColor Blue
+                $indexTemplateName = "logs-nessus.vulnerability"
+                $indexTemplateNameJSON = Get-Content $(Join-Path .\templates -ChildPath "$indexTemplateName.json")
+                $indexTemplateURL = $Elasticsearch_URL+"/_index_template/"+$indexTemplateName
+                try { 
+                    $createIndexTemplate = Invoke-RestMethod -Method PUT -Uri $indexTemplateURL -Body $indexTemplateNameJSON -ContentType "application/json" -Credential $Elasticsearch_Credentials -AllowUnencryptedAuthentication -SkipCertificateCheck
+                    if ($createIndexTemplate.acknowledged -eq $true) {
+                        Write-Host "The index template $indexTemplateName was successfully created!" -ForegroundColor Green
+                        Write-Host "Check it out here: $Kibana_URL/app/management/data/index_management/templates/$indexTemplateName" -ForegroundColor Blue
+                    } else {
+                        Write-Host "Index template failed to get created."
+                    }
+                } catch {
+                    Write-Host "Couldn't add index template, likely because it already exists. Check kibana to see if the ingest pipeline $indexTemplateName exists." -ForegroundColor Yellow
+                }
+
+                #Import Saved Objects
+                $dashboardsPath = $(Resolve-Path .\dashboards).path
+                $importSavedObjectsURL = $Kibana_URL+"/api/saved_objects/_import?overwrite=true"
+                $kibanaHeader = @{"kbn-xsrf" = "true"; "Authorization" = "$Kibana_Credentials"}
+                $allDashboardFiles = Get-ChildItem $dashboardsPath
+                $allDashboardFiles | ForEach-Object {
+                    $fileBytes = [System.IO.File]::ReadAllBytes($_.FullName);
+                    $fileEnc = [System.Text.Encoding]::GetEncoding('UTF-8').GetString($fileBytes);
+                    $boundary = [System.Guid]::NewGuid().ToString(); 
+                    $LF = "`r`n";
+    
+                    $bodyLines = ( 
+                        "--$boundary",
+                        "Content-Disposition: form-data; name=`"file`"; filename=`"$($_.name)`"",
+                        "Content-Type: application/octet-stream$LF",
+                        $fileEnc,
+                        "--$boundary--$LF" 
+                    ) -join $LF
+    
+                    $result = Invoke-RestMethod -Method POST -Uri $importSavedObjectsURL -Headers $kibanaHeader -ContentType "multipart/form-data; boundary=`"$boundary`"" -Body $bodyLines -AllowUnencryptedAuthentication -SkipCertificateCheck
+                    if($result.errors -or $null -eq $result){
+                        Write-Host "There was an error trying to import $filename"
+                        $result.errors
+                    }
+                    $fileBytes = $null
+                    $fileEnc = $null
+                    $boundary = $null
+                    $result = $null
+                }
+
+                #Create Nessus API Key
+                Write-Host "Setting up customized Nessus Elasticsearch API Key for writing to logs-nessus.vulnerability data stream." -ForegroundColor Blue
+                $logsNessusAPIKey = "logs-nessus.vulnerability-api-key"
+                $logsNessusAPIKeyJSON = Get-Content $(Join-Path .\templates -ChildPath "$logsNessusAPIKey.json")
+                $createAPIKeyURL = $Elasticsearch_URL+"/_security/api_key"
+                try { 
+                    $createAPIKey = Invoke-RestMethod -Method PUT -Uri $createAPIKeyURL -Body $logsNessusAPIKeyJSON -ContentType "application/json" -Credential $Elasticsearch_Credentials -AllowUnencryptedAuthentication -SkipCertificateCheck
+                    if ($createAPIKey.acknowledged -eq $true) {
+                        Write-Host "The Nessus API key was successfully created!" -ForegroundColor Green
+                        Write-Host "Here is your encoded API Key that can be used to ingest your Nessus scan data into the $($createApiKey.name) data stream.`nStore in a safe place: $($createApiKey.encoded)"
+                    } else {
+                        Write-Host "API Key failed to get created." -ForegroundColor Yellow
+                    }
+                } catch {
+                    Write-Host "API Key failed to get created. $_" -ForegroundColor Yellow
+                }
+
                 $finished = $true
             }
             'q' {
