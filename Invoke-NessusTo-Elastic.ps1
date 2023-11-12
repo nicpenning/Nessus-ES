@@ -96,7 +96,7 @@ Begin{
 
     function Show-Menu {
         $option1 = "1. Export Nessus files."
-        $option2 = "2. Ingest Nessus files into Elastic."
+        $option2 = "2. Ingest a Nessus file into Elastic."
         $option3 = "3. Export and Ingest Nessus files into Elastic."
         $option4 = "4. Setup Elasticsearch and Kibana."
         $quit = "Q. Quit"
