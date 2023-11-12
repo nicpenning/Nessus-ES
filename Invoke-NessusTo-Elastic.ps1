@@ -100,7 +100,7 @@ Begin{
         $option3 = "3. Export and Ingest Nessus files into Elastic."
         $option4 = "4. Setup Elasticsearch and Kibana."
         $quit = "Q. Quit"
-        $version = "`nVersion 0.4.0"
+        $version = "`nVersion 0.3.0"
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
         Write-Host "What would you like to do?" -ForegroundColor Yellow
         Write-Host $option1
