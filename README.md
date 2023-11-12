@@ -23,7 +23,7 @@ Requirements
 * .nessus File(s) Exported (Script included to export these files!)
 
 Script now includes a Menu to help you through the process to use this tool:
-![image](https://github.com/nicpenning/Nessus-ES/assets/5582679/eeaad4f9-d48c-4a84-9c4d-82338ba3f648)
+![image](https://github.com/nicpenning/Nessus-ES/assets/5582679/b27b0fbe-d871-49cc-87bf-a32a40d24811)
 
 ## Now
 - [X] Index Template (How To)
