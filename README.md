@@ -17,8 +17,8 @@ If you are looking for a more robust solution that handles many other vulnerabil
 The Nessus-ES project is a simplified way of taking .nessus files and ingesting them into Elastic using PowerShell on Windows, Mac, or Linux.
 
 Requirements
-* Functioning Elastic Stack (7.0+, 8.10.4 Tested)
-* PowerShell 7.0+
+* Functioning Elastic Stack (7.0+, 8.11.0 Tested)
+* PowerShell 7.0+ (7.3.8 Tested)
 * .nessus File(s) Exported (Script included to export these files!)
 
 ## Now
@@ -33,7 +33,6 @@ Requirements
 
 ## Future
 - [ ] Add Detection Rules
-
 
 ## Automated or Manual Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
 Invoke-NessusTo-Elastic.ps1
