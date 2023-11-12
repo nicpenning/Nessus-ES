@@ -1,18 +1,18 @@
 <#
 .Synopsis
-    This script is a combination of extracting, automating, and importing Nessus scan data into the Elastic stack.
+    This script is a combination of extracting, importing, and automating Nessus scan data into the Elastic stack.
     
-    *ExtractFrom-Nessus*
+    *Invoke-Exract_From_Nessus*
     Downloads scans from the My Scans folder (or custom folder) and move them to a different folder of your choosing for archival purposes.
 
-    *Automate-NessusImport*
+    *Invoke-Import_Nessus_To_Elasticsearch*
+    Parses a single Nessus XML report and imports it into Elasticsearch using the _bulk API.
+
+    *Invoke-Automate_Nessus_File_Imports*
     Automatically checks for any unprocessed .nessus files and ingest them into Elastic.
 
-    *ImportTo-Elasticsearch-Nessus*
-    Parses Nessus XML reports and import into Elasticsearch using the _bulk API.
-
     *Setup-Elastic-Stack*
-    <Coming soon!>
+    Use this script to configure an Elastic stack to properly ingest and visualize the Nessus scan data before ingestion.
 
 .DESCRIPTION
    This script is useful for automating the downloads of Nessus scan files and importing them into the Elastic stack. The script will be able to allow for some customizations
