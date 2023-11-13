@@ -94,19 +94,24 @@ Begin{
         Exit
     }
 
+    $option0 = "0. Setup Elasticsearch and Kibana."
+    $option1 = "1. Export Nessus files."
+    $option2 = "2. Ingest a single Nessus file into Elasticsearch."
+    $option3 = "3. Ingest all Nessus files from a specified directory into Elasticsearch."
+    $option4 = "4. Export and Ingest Nessus files into Elasticsearch."
+    $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
+    $quit = "Q. Quit"
+    $version = "`nVersion 0.5.0"
+
     function Show-Menu {
-        $option1 = "1. Export Nessus files."
-        $option2 = "2. Ingest a Nessus file into Elastic."
-        $option3 = "3. Export and Ingest Nessus files into Elastic."
-        $option4 = "4. Setup Elasticsearch and Kibana."
-        $quit = "Q. Quit"
-        $version = "`nVersion 0.4.0"
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
         Write-Host "What would you like to do?" -ForegroundColor Yellow
+        Write-Host $option0
         Write-Host $option1
         Write-Host $option2
         Write-Host $option3
         Write-Host $option4
+        Write-Host $option5
         Write-Host $quit
         Write-Host $version
     }
@@ -586,13 +591,13 @@ Begin{
                 $Nessus_XML_File = Join-Path $Nessus_File_Download_Location -ChildPath $_.Name
                 $markProcessed = "$($_.Name).processed"
                 Write-Host "Going to process $_ now."
-                Invoke-Import_Nessus_To_Elasticsearch -Nessus_XML_File $Nessus_XML_File -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_API_Key
+                Invoke-Import_Nessus_To_Elasticsearch -Nessus_XML_File $_ -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_API_Key
                 $ending = Get-Date
                 $duration = $ending - $starting
                 $($Nessus_XML_File+'-PSNFscript-'+$duration | Out-File $(Resolve-Path parsedTime.txt).Path -Append)
                 $($_ | Get-FileHash).Hash.toString() | Add-Content $processedHashesPath
                 Write-Host "$Nessus_XML_File processed in $duration"
-                Rename-Item -Path $Nessus_XML_File -NewName $markProcessed
+                Rename-Item -Path $_ -NewName $markProcessed
             } else {
                 Write-Host "The file $($_.Name) doesn't end in .nessus or has already been processed in the $ProcessedHashesPath file. This file is used for tracking what files have been ingested to prevent duplicate ingest of data."
                 Write-Host "If it's already been processed and you want to process it again, remove the hash from the $ProcessedHashesPath file or just remove it entirely for a clean slate."
@@ -600,6 +605,10 @@ Begin{
         }
         
         Write-Host "End of automating script!" -ForegroundColor Green
+    }
+
+    function Invoke-Purge_Processed_Hashes_List {
+        Remove-Item .\ProcessedHashes.txt -Force
     }
 }
 
@@ -613,66 +622,8 @@ Process {
         }
     
         switch ($Option_Selected) {
-            '1' {
-                Write-Host "You selected Option $option1"
-                
-                #Check for Nessus Access and Nessus Secret Key and Prompt if not provided
-                if($null -eq $Nessus_Access_Key){
-                    $Nessus_Access_Key = Read-Host "Nessus Access Key"
-                }
-                if($null -eq $Nessus_Secret_Key){
-                    $Nessus_Secret_Key = Read-Host "Nessus Secret Key"
-                }
-
-                Invoke-Exract_From_Nessus -Nessus_URL $Nessus_URL -Nessus_File_Download_Location $Nessus_File_Download_Location -Nessus_Access_Key $Nessus_Access_Key -Nessus_Secret_Key $Nessus_Secret_Key -Nessus_Source_Folder_Name $Nessus_Source_Folder_Name -Nessus_Archive_Folder_Name $Nessus_Archive_Folder_Name -Export_Scans_From_Today $Export_Scans_From_Today -Export_Day $Export_Day -Export_Custom_Extended_File_Name_Attribute $Export_Custom_Extended_File_Name_Attribute
-                $finished = $true
-            }
-            '2' {
-                Write-Host "You selected Option $option2"
-
-                #Check for Nessus XML File you wish to process
-                if($null -eq $Nessus_XML_File){
-                    $Nessus_XML_File = Read-Host "Nessus XML File (.nessus)"
-                }
-
-                #Check for Elasticsearch URL and API Keys and prompt if not provided
-                if($null -eq $Elasticsearch_URL){
-                    $Elasticsearch_URL = Read-Host "Elasticsearch URL (https://127.0.0.1:9200)"
-                }
-                if($null -eq $Elasticsearch_Api_Key){
-                    $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
-                }
-
-                Invoke-Import_Nessus_To_Elasticsearch -Nessus_XML_File $Nessus_XML_File -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
-                $finished = $true
-            }
-            '3' {
-                Write-Host "You selected Option $option3"
-
-                #Check for Nessus Access and Nessus Secret Key and Prompt if not provided
-                if($null -eq $Nessus_Access_Key){
-                    $Nessus_Access_Key = Read-Host "Nessus Access Key"
-                }
-                if($null -eq $Nessus_Secret_Key){
-                    $Nessus_Secret_Key = Read-Host "Nessus Secret Key"
-                }
-
-                #Check for Elasticsearch URL and API Keys and prompt if not provided
-                if($null -eq $Elasticsearch_URL){
-                    $Elasticsearch_URL = Read-Host "Elasticsearch URL (https://127.0.0.1:9200)"
-                }
-                if($null -eq $Elasticsearch_Api_Key){
-                    $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
-                }
-
-                Invoke-Exract_From_Nessus -Nessus_URL $Nessus_URL -Nessus_File_Download_Location $Nessus_File_Download_Location -Nessus_Access_Key $Nessus_Access_Key -Nessus_Secret_Key $Nessus_Secret_Key -Nessus_Source_Folder_Name $Nessus_Source_Folder_Name -Nessus_Archive_Folder_Name $Nessus_Archive_Folder_Name -Export_Scans_From_Today $Export_Scans_From_Today -Export_Day $Export_Day -Export_Custom_Extended_File_Name_Attribute $Export_Custom_Extended_File_Name_Attribute
-
-                Invoke-Automate_Nessus_File_Imports -Nessus_File_Download_Location $Nessus_File_Download_Location -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
-                
-                $finished = $true
-            }
-            '4' {
-                Write-Host "You selected Option $option4"
+            '0' {
+                Write-Host "You selected Option $option0"
                 
                 #Check for Elasticserach URL, Kibana Url, and elastic credentials
                 $Elasticsearch_URL = Read-Host "Elasticsearch URL"
@@ -764,8 +715,88 @@ Process {
 
                 $finished = $true
             }
+            '1' {
+                Write-Host "You selected Option $option1"
+                
+                #Check for Nessus Access and Nessus Secret Key and Prompt if not provided
+                if($null -eq $Nessus_Access_Key){
+                    $Nessus_Access_Key = Read-Host "Nessus Access Key"
+                }
+                if($null -eq $Nessus_Secret_Key){
+                    $Nessus_Secret_Key = Read-Host "Nessus Secret Key"
+                }
+
+                Invoke-Exract_From_Nessus -Nessus_URL $Nessus_URL -Nessus_File_Download_Location $Nessus_File_Download_Location -Nessus_Access_Key $Nessus_Access_Key -Nessus_Secret_Key $Nessus_Secret_Key -Nessus_Source_Folder_Name $Nessus_Source_Folder_Name -Nessus_Archive_Folder_Name $Nessus_Archive_Folder_Name -Export_Scans_From_Today $Export_Scans_From_Today -Export_Day $Export_Day -Export_Custom_Extended_File_Name_Attribute $Export_Custom_Extended_File_Name_Attribute
+                $finished = $true
+            }
+            '2' {
+                Write-Host "You selected Option $option2"
+
+                #Check for Nessus XML File you wish to process
+                if($null -eq $Nessus_XML_File){
+                    $Nessus_XML_File = Read-Host "Nessus XML File (.nessus)"
+                }
+
+                #Check for Elasticsearch URL and API Keys and prompt if not provided
+                if($null -eq $Elasticsearch_URL){
+                    $Elasticsearch_URL = Read-Host "Elasticsearch URL (https://127.0.0.1:9200)"
+                }
+                if($null -eq $Elasticsearch_Api_Key){
+                    $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
+                }
+
+                Invoke-Import_Nessus_To_Elasticsearch -Nessus_XML_File $Nessus_XML_File -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
+                $finished = $true
+            }
+            '3' {
+                Write-Host "You selected Option $option3"
+
+                #Check for Elasticsearch URL and API Keys and prompt if not provided
+                if($null -eq $Elasticsearch_URL){
+                    $Elasticsearch_URL = Read-Host "Elasticsearch URL (https://127.0.0.1:9200)"
+                }
+                if($null -eq $Elasticsearch_Api_Key){
+                    $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
+                }
+
+                Invoke-Automate_Nessus_File_Imports -Nessus_File_Download_Location $Nessus_File_Download_Location -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
+                
+                $finished = $true
+            }
+            '4' {
+                Write-Host "You selected Option $option4." -ForegroundColor Yellow
+                
+                #Check for Nessus Access and Nessus Secret Key and Prompt if not provided
+                if($null -eq $Nessus_Access_Key){
+                    $Nessus_Access_Key = Read-Host "Nessus Access Key"
+                }
+                if($null -eq $Nessus_Secret_Key){
+                    $Nessus_Secret_Key = Read-Host "Nessus Secret Key"
+                }
+
+                #Check for Elasticsearch URL and API Keys and prompt if not provided
+                if($null -eq $Elasticsearch_URL){
+                    $Elasticsearch_URL = Read-Host "Elasticsearch URL (https://127.0.0.1:9200)"
+                }
+                if($null -eq $Elasticsearch_Api_Key){
+                    $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
+                }
+
+                Invoke-Exract_From_Nessus -Nessus_URL $Nessus_URL -Nessus_File_Download_Location $Nessus_File_Download_Location -Nessus_Access_Key $Nessus_Access_Key -Nessus_Secret_Key $Nessus_Secret_Key -Nessus_Source_Folder_Name $Nessus_Source_Folder_Name -Nessus_Archive_Folder_Name $Nessus_Archive_Folder_Name -Export_Scans_From_Today $Export_Scans_From_Today -Export_Day $Export_Day -Export_Custom_Extended_File_Name_Attribute $Export_Custom_Extended_File_Name_Attribute
+
+                Invoke-Automate_Nessus_File_Imports -Nessus_File_Download_Location $Nessus_File_Download_Location -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
+
+                $finished = $true
+                break
+            }
+            '5' {
+                Write-Host "You selected Option $option5." -ForegroundColor Yellow
+                Invoke-Purge_Processed_Hashes_List
+                $finished = $true
+                break
+            }
             'q' {
-                Write-Host "You select quit, exiting." -ForegroundColor Yellow
+                Write-Host "You selected quit, exiting." -ForegroundColor Yellow
                 $finished = $true
                 break
             }
