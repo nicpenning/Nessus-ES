@@ -101,7 +101,7 @@ Begin{
     $option4 = "4. Export and Ingest Nessus files into Elasticsearch."
     $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
     $quit = "Q. Quit"
-    $version = "`nVersion 0.5.0"
+    $version = "`nVersion 0.6.0"
 
     function Show-Menu {
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
@@ -610,6 +610,22 @@ Begin{
     function Invoke-Purge_Processed_Hashes_List {
         Remove-Item .\ProcessedHashes.txt -Force
     }
+
+    function Invoke-Revert_Nessus_To_Processed_Rename {
+        Param (
+            # The location where you wish to save the extracted Nessus files from the scanner (default - Nessus_Exports)
+            [Parameter(Mandatory=$true)]
+            $Nessus_File_Download_Location
+        )
+        # Get all files in the directory with the .nessus.processed extension
+        $allFiles = Get-ChildItem -Path $Nessus_File_Download_Location -Filter *.processed
+        
+        # Rename each file
+        foreach ($file in $allFiles) {
+            $newName = $file.FullName -replace '\.processed$', ''
+            Rename-Item -Path $file.FullName -NewName $newName -Force
+        }
+    }
 }
 
 Process {
@@ -758,6 +774,9 @@ Process {
                 if($null -eq $Elasticsearch_Api_Key){
                     $Elasticsearch_Api_Key = Read-Host "Elasticsearch API Key"
                 }
+                if($null -eq $Nessus_File_Download_Location){
+                    $Nessus_File_Download_Location = Read-Host "Nessus File Download Location (default - Nessus Exports)"
+                }
 
                 Invoke-Automate_Nessus_File_Imports -Nessus_File_Download_Location $Nessus_File_Download_Location -Elasticsearch_URL $Elasticsearch_URL -Elasticsearch_Index_Name $Elasticsearch_Index_Name -Elasticsearch_API_Key $Elasticsearch_Api_Key
                 
@@ -792,6 +811,7 @@ Process {
             '5' {
                 Write-Host "You selected Option $option5." -ForegroundColor Yellow
                 Invoke-Purge_Processed_Hashes_List
+                Invoke-Revert_Nessus_To_Processed_Rename $Nessus_File_Download_Location
                 $finished = $true
                 break
             }
