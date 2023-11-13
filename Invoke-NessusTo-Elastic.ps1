@@ -795,7 +795,7 @@ Process {
                 $finished = $true
                 break
             }
-            'q' {
+            'Q' {
                 Write-Host "You selected quit, exiting." -ForegroundColor Yellow
                 $finished = $true
                 break
