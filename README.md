@@ -29,7 +29,7 @@ Script now includes a Menu to help you through the process to use this tool:
 - [X] Index Template (How To)
 - [X] Index Pattern, Searches, Visualizations, and Dashboards
 - [X] ECS coverage across as many fields as possible
-- [X] Documentation ([Wiki](https://github.com/nicpenning/Nessus-ES/wiki))
+- [X] Documentation ([Wiki](https://github.com/nicpenning/Nessus-ES/wiki/Overview))
 - [X] Automated Nessus File Download Script
 - [X] Automated Ingest
 - [X] Create a release
@@ -38,7 +38,7 @@ Script now includes a Menu to help you through the process to use this tool:
 ## Future
 - [ ] Add Detection Rules
 
-## Automated or Manual Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki)!
+## Automated or Manual Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki/Overview)!
 Invoke-NessusTo-Elastic.ps1
 
 ## Full dashboard preview
