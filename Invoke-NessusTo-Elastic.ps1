@@ -220,23 +220,15 @@ Begin{
                     $scanHistory = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/scans/$($currentId)?limit=2500" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
                     $scanHistory.history | ForEach-Object {
                         if ($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate) {
-                            Write-Host "Going to export $_"
+                            #Write-Host "Going to export $_"
                             Write-Host "Scan History ID Found $($_.history_id)"
                             $currentConvertedTime = convertToISO($_.creation_date)
                             export -scanId $currentId -historyId $_.history_id -currentConvertedTime $currentConvertedTime
                             Write-Host "Finished export of $_, going to update status..."
                         } else {
-                            Write-Host "Nothing found" #$_
-                            convertToISO($_.creation_date)
+                            #Write-Host "Nothing found" #$_
+                            #convertToISO($_.creation_date)
                         }
-                    }
-                    if ($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate) {
-                        Write-Host "Going to export $_"
-                        export($_.id)
-                        Write-Host "Finished export of $_, going to update status..."
-                    } else {
-                        Write-Host $_
-                        Write-Host convertToISO($_.creation_date)
                     }
                 }
             } else {
