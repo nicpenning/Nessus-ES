@@ -216,6 +216,20 @@ Begin{
                 #Gets day entered from arguments
                 $getDate = $Export_Day | Get-Date -Format "dddd-d"
                 $global:listOfScans | ForEach-Object {
+                    $currentId = $_.id
+                    $scanHistory = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/scans/$($currentId)?limit=2500" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+                    $scanHistory.history | ForEach-Object {
+                        if ($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate) {
+                            Write-Host "Going to export $_"
+                            Write-Host "Scan History ID Found $($_.history_id)"
+                            $currentConvertedTime = convertToISO($_.creation_date)
+                            export -scanId $currentId -historyId $_.history_id -currentConvertedTime $currentConvertedTime
+                            Write-Host "Finished export of $_, going to update status..."
+                        } else {
+                            Write-Host "Nothing found" #$_
+                            convertToISO($_.creation_date)
+                        }
+                    }
                     if ($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate) {
                         Write-Host "Going to export $_"
                         export($_.id)
@@ -244,21 +258,25 @@ Begin{
             Write-Host "Scan Moved to Archive - Export Complete." -ForegroundColor Green
         }
 
-        function export{
-            Param ($scanId)
+        function export ($scanId, $historyId, $currentConvertedTime){
             Write-Host $scanId
             do {
-                $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
+                if($null -eq $currentConvertedTime){
+                    $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
+                }else{
+                    $convertedTime = $currentConvertedTime
+                }
                 $exportFileName = Join-Path $Nessus_File_Download_Location $($($convertedTime | Get-Date -Format yyyy_MM_dd).ToString()+"-$scanId$($Export_Custom_Extended_File_Name_Attribute).nessus")
                 $exportComplete = 0
                 $currentScanIdStatus = $($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).status
                 #Check to see if scan is not running or is an empty scan, if true then lets export!
-                if ($currentScanIdStatus -ne 'running' -and $currentScanIdStatus -ne 'empty') {
+                if ($currentScanIdStatus -ne 'running' -and $currentScanIdStatus -ne 'empty' -or $historyId) {
                     $scanExportOptions = [PSCustomObject]@{
                         "format" = "nessus"
                     } | ConvertTo-Json
                     #Start the export process to Nessus has the file prepared for download
-                    $exportInfo = Invoke-RestMethod -Method Post "$Nessus_URL/scans/$($scanId)/export" -Body $scanExportOptions -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+                    if($historyId){$historyIdFound = "?history_id=$historyId"}else {$historyId = $null}
+                    $exportInfo = Invoke-RestMethod -Method Post "$Nessus_URL/scans/$($scanId)/export$($historyIdFound)" -Body $scanExportOptions -ContentType "application/json" -Headers $headers -SkipCertificateCheck
                     $exportStatus = ''
                     while ($exportStatus.status -ne 'ready') {
                         try {
