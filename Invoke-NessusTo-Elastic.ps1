@@ -224,7 +224,7 @@ Begin{
                             Write-Host "Scan History ID Found $($_.history_id)"
                             $currentConvertedTime = convertToISO($_.creation_date)
                             export -scanId $currentId -historyId $_.history_id -currentConvertedTime $currentConvertedTime
-                            Write-Host "Finished export of $_, going to update status..."
+                            Write-Host "Finished export of $currentId, going to update status..."
                         } else {
                             #Write-Host "Nothing found" #$_
                             #convertToISO($_.creation_date)
@@ -251,7 +251,7 @@ Begin{
         }
 
         function export ($scanId, $historyId, $currentConvertedTime){
-            Write-Host $scanId
+            Write-Host "Scan ID $scanId exporting..."
             do {
                 if($null -eq $currentConvertedTime){
                     $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
