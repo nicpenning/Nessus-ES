@@ -63,6 +63,9 @@ Param (
     # The destination folder in Nessus UI for where you wish to move your scans for archive. (default - none - scans won't move)
     [Parameter(Mandatory=$false)]
     $Nessus_Archive_Folder_Name = $null,
+    # The scan name you want to delete the older scan from (default - none - scans won't get deleted)
+    [Parameter(Mandatory=$false)]
+    $Nessus_Scan_Name_To_Delete_Oldest_Scan = $null,
     # Use this setting if you wish to only export the scans on the day the scan occurred. (default - false)
     [Parameter(Mandatory=$false)]
     $Export_Scans_From_Today = $null,
@@ -100,8 +103,9 @@ Begin{
     $option3 = "3. Ingest all Nessus files from a specified directory into Elasticsearch."
     $option4 = "4. Export and Ingest Nessus files into Elasticsearch."
     $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
+    $option6 = "6. Delete oldest scan from scan history (Future / Doesn't Work)"
     $quit = "Q. Quit"
-    $version = "`nVersion 0.7.0"
+    $version = "`nVersion 0.8.0"
 
     function Show-Menu {
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
@@ -112,10 +116,48 @@ Begin{
         Write-Host $option3
         Write-Host $option4
         Write-Host $option5
+        Write-Host $option6
         Write-Host $quit
         Write-Host $version
     }
     
+    # Miscellenous Functions
+    # Get FolderID from Folder name
+    function getFolderIdFromName {
+        param ($folderNames)
+
+        $folders = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/folders" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        Write-Host "Folders Found: "
+        $folders.folders.Name | ForEach-Object {
+            Write-Host "$_" -ForegroundColor Green
+        }
+        $global:sourceFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[0]}).id
+        $global:archiveFolderId = $($folders.folders | Where-Object {$_.Name -eq $folderNames[1]}).id
+    }
+
+    # Update Scan status
+    function updateStatus {
+        #Store the current Nessus Scans and their completing/running status to currentNessusScanData
+        $global:currentNessusScanDataRaw = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/scans?folder_id=$($global:sourceFolderId)" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        $global:listOfScans = $global:currentNessusScanDataRaw.scans | Select-Object -Property Name,Status,creation_date,id
+        if ($global:listOfScans) {
+            Write-Host "Scans found!" -ForegroundColor Green
+            $global:listOfScans
+        } else {
+            Write-Host "No scans found." -ForegroundColor Red
+        }
+    }
+    
+    # Simple epoch to ISO8601 Timestamp converter
+    function convertToISO {
+        Param($epochTime)
+        [datetime]$epoch = '1970-01-01 00:00:00'
+        [datetime]$result = $epoch.AddSeconds($epochTime)
+        $newTime = Get-Date $result -Format "o"
+        return $newTime
+    }
+
+    # Core Functions
     function Invoke-Exract_From_Nessus {
         Param (
             # Nessus URL. (default - https://127.0.0.1:8834)
@@ -636,6 +678,47 @@ Begin{
             Rename-Item -Path $file.FullName -NewName $newName -Force
         }
     }
+
+    function Invoke-Purge_Oldest_Scan_From_History {
+        Param ( 
+        [Parameter(Mandatory=$true)]
+        $Nessus_Scan_Name_To_Delete_Oldest_Scan
+        )
+
+        $headers =  @{'X-ApiKeys' = "accessKey=$Nessus_Access_Key; secretKey=$Nessus_Secret_Key"}
+        
+        # Don't parse the file downloads because we care about speed!
+        $ProgressPreference = 'SilentlyContinue'
+        getFolderIdFromName $Nessus_Source_Folder_Name, $Nessus_Archive_Folder_Name
+        updateStatus
+        $global:listOfScans | Where-Object -Property name -eq $Nessus_Scan_Name_To_Delete_Oldest_Scan
+        $scanId = $($global:listOfScans | Where-Object -Property name -eq $Nessus_Scan_Name_To_Delete_Oldest_Scan).id
+        if($null -eq $scanId){
+            Write-Host "Invalid scan name entered ($Nessus_Scan_Name_To_Delete_Oldest_Scan) - exiting script" -ForegroundColor Yellow
+            exit
+        } else {
+            Write-Host "Valid scan name found ($Nessus_Scan_Name_To_Delete_Oldest_Scan)" -ForegroundColor Green
+        }
+        $scanHistory = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/scans/$($scanId)?limit=2500" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+        $scanHistorySorted = $scanHistory.history | Select-Object -Property history_id, @{Name='creation_date'; Expression={convertToISO($_.creation_date)|Get-Date -Format 'MM/dd/yyyy HH:mm:ss'}}, status | Sort-Object -Property creation_date
+        $oldestStartDate =  $scanHistorySorted[0].creation_date
+        $oldestStatus = $scanHistorySorted[0].status
+        $oldestHistoryId = $scanHistorySorted[0].history_id
+        $scanHistorySorted 
+        Write-Host "Found $($($scanHistory.history).count) total scans for $($scanHistory.info.name)"
+        Write-Host "The oldest scan will be deleted. Details below:`nScan Started: $oldestStartDate`nScan Status: $oldestStatus`nScan History Id: $oldestHistoryId"
+        try{
+            # Delete scan
+            Write-Host "Deleting scan! $Nessus_Scan_Name_To_Delete_Oldest_Scan (Id-$scanId,History Id-$oldestHistoryId)" -ForegroundColor Magenta
+            $deleteScan = Invoke-RestMethod -Method Delete -Uri "$Nessus_URL/scans/$($scanId)/history/$oldestHistoryId" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
+            Write-Host "Scan successfully deleted!"
+        } catch {
+            Write-Host "Scan could not be deleted. $_"
+        }
+
+        Write-Host "End of oldest scan deletion script!" -ForegroundColor Green
+    }
+
 }
 
 Process {
@@ -822,6 +905,15 @@ Process {
                 Write-Host "You selected Option $option5." -ForegroundColor Yellow
                 Invoke-Purge_Processed_Hashes_List
                 Invoke-Revert_Nessus_To_Processed_Rename $Nessus_File_Download_Location
+                $finished = $true
+                break
+            }
+            '6' {
+                Write-Host "You selected Option $option6." -ForegroundColor Yellow
+                if($null -eq $Nessus_Scan_Name_To_Delete_Oldest_Scan){
+                    $Nessus_Scan_Name_To_Delete_Oldest_Scan = Read-Host "Nessus Scan Name to Delete Oldest Scan"
+                }
+                Invoke-Purge_Oldest_Scan_From_History $Nessus_Scan_Name_To_Delete_Oldest_Scan
                 $finished = $true
                 break
             }
