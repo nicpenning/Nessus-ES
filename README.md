@@ -37,6 +37,7 @@ Script now includes a Menu to help you through the process to use this tool:
 
 ## Future
 - [ ] Add Detection Rules
+- [ ] Compare Scans
 
 ## Automated or Manual Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki/Overview)!
 Invoke-NessusTo-Elastic.ps1
