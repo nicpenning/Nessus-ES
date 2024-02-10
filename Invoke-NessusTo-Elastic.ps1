@@ -18,7 +18,7 @@
    This script is useful for automating the downloads of Nessus scan files and importing them into the Elastic stack. The script will be able to allow for some customizations
    such as the Nessus scanner host, the location of the downloads, and the Nessus scan folder for which you wish to move the scans
    after they have been downloaded (if you so choose). This tool was inspired from the Posh-Nessus script. Due to lack of updates on the Posh-Nessus
-   project, it seemed easeier to call the raw API to perform the bare minimum functions necessary to export
+   project, it seemed easier to call the raw API to perform the bare minimum functions necessary to export
    scans out automatically. I appreciate Tenable leaving these core API functions (export scan and scan status) in their product.
 
    Tested for Nessus 8.9.0+.
@@ -300,7 +300,7 @@ Begin{
                 }else{
                     $convertedTime = $currentConvertedTime
                 }
-                $exportFileName = Join-Path $Nessus_File_Download_Location $($($convertedTime | Get-Date -Format yyyy_MM_dd).ToString()+"-$scanId$($Export_Custom_Extended_File_Name_Attribute).nessus")
+                $exportFileName = Join-Path $Nessus_File_Download_Location $($($convertedTime | Get-Date -Format yyyy_MM_dd).ToString()+"-$($_.name)"+"-$scanId$($Export_Custom_Extended_File_Name_Attribute).nessus")
                 $exportComplete = 0
                 $currentScanIdStatus = $($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).status
                 #Check to see if scan is not running or is an empty scan, if true then lets export!
