@@ -21,7 +21,7 @@
    project, it seemed easier to call the raw API to perform the bare minimum functions necessary to export
    scans out automatically. I appreciate Tenable leaving these core API functions (export scan and scan status) in their product.
 
-   Tested for Nessus 8.9.0+.
+   Tested for Nessus 8.9.0+, Latest Tested 10.7.0.
 
    Variable Options
    -Nessus_URL "https://127.0.0.1:8834"
