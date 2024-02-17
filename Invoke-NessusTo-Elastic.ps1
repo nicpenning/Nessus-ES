@@ -105,7 +105,7 @@ Begin{
     $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
     #$option10 = "10. Delete oldest scan from scan history (Future / Only works with Nessus Manager license)"
     $quit = "Q. Quit"
-    $version = "`nVersion 0.9.0"
+    $version = "`nVersion 0.8.0"
 
     function Show-Menu {
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
