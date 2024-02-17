@@ -103,7 +103,7 @@ Begin{
     $option3 = "3. Ingest all Nessus files from a specified directory into Elasticsearch."
     $option4 = "4. Export and Ingest Nessus files into Elasticsearch."
     $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
-    $option6 = "6. Delete oldest scan from scan history (Future / Doesn't Work)"
+    #$option10 = "10. Delete oldest scan from scan history (Future / Only works with Nessus Manager license)"
     $quit = "Q. Quit"
     $version = "`nVersion 0.9.0"
 
@@ -116,7 +116,7 @@ Begin{
         Write-Host $option3
         Write-Host $option4
         Write-Host $option5
-        Write-Host $option6
+        Write-Host $option10
         Write-Host $quit
         Write-Host $version
     }
@@ -910,7 +910,7 @@ Process {
                 break
             }
             '6' {
-                Write-Host "You selected Option $option6." -ForegroundColor Yellow
+                Write-Host "You selected Option $option10." -ForegroundColor Yellow
                 if($null -eq $Nessus_Scan_Name_To_Delete_Oldest_Scan){
                     $Nessus_Scan_Name_To_Delete_Oldest_Scan = Read-Host "Nessus Scan Name to Delete Oldest Scan"
                 }
