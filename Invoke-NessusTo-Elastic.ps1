@@ -18,7 +18,7 @@
    This script is useful for automating the downloads of Nessus scan files and importing them into the Elastic stack. The script will be able to allow for some customizations
    such as the Nessus scanner host, the location of the downloads, and the Nessus scan folder for which you wish to move the scans
    after they have been downloaded (if you so choose). This tool was inspired from the Posh-Nessus script. Due to lack of updates on the Posh-Nessus
-   project, it seemed easeier to call the raw API to perform the bare minimum functions necessary to export
+   project, it seemed easier to call the raw API to perform the bare minimum functions necessary to export
    scans out automatically. I appreciate Tenable leaving these core API functions (export scan and scan status) in their product.
 
    Tested for Nessus 8.9.0+.
@@ -105,7 +105,7 @@ Begin{
     $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
     $option6 = "6. Delete oldest scan from scan history (Future / Doesn't Work)"
     $quit = "Q. Quit"
-    $version = "`nVersion 0.8.0"
+    $version = "`nVersion 0.9.0"
 
     function Show-Menu {
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
@@ -259,13 +259,14 @@ Begin{
                 $getDate = $Export_Day | Get-Date -Format "dddd-d"
                 $global:listOfScans | ForEach-Object {
                     $currentId = $_.id
+                    $scanName = $_.name
                     $scanHistory = Invoke-RestMethod -Method Get -Uri "$Nessus_URL/scans/$($currentId)?limit=2500" -ContentType "application/json" -Headers $headers -SkipCertificateCheck
                     $scanHistory.history | ForEach-Object {
                         if ($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate) {
                             #Write-Host "Going to export $_"
                             Write-Host "Scan History ID Found $($_.history_id)"
                             $currentConvertedTime = convertToISO($_.creation_date)
-                            export -scanId $currentId -historyId $_.history_id -currentConvertedTime $currentConvertedTime
+                            export -scanId $currentId -historyId $_.history_id -currentConvertedTime $currentConvertedTime -scanName $scanName
                             Write-Host "Finished export of $currentId, going to update status..."
                         } else {
                             #Write-Host "Nothing found" #$_
@@ -292,7 +293,7 @@ Begin{
             Write-Host "Scan Moved to Archive - Export Complete." -ForegroundColor Green
         }
 
-        function export ($scanId, $historyId, $currentConvertedTime){
+        function export ($scanId, $historyId, $currentConvertedTime, $scanName){
             Write-Host "Scan ID $scanId exporting..."
             do {
                 if($null -eq $currentConvertedTime){
@@ -300,7 +301,7 @@ Begin{
                 }else{
                     $convertedTime = $currentConvertedTime
                 }
-                $exportFileName = Join-Path $Nessus_File_Download_Location $($($convertedTime | Get-Date -Format yyyy_MM_dd).ToString()+"-$scanId$($Export_Custom_Extended_File_Name_Attribute).nessus")
+                $exportFileName = Join-Path $Nessus_File_Download_Location $($($convertedTime | Get-Date -Format yyyy_MM_dd).ToString()+"-$($scanName)"+"-$scanId$($Export_Custom_Extended_File_Name_Attribute).nessus")
                 $exportComplete = 0
                 $currentScanIdStatus = $($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).status
                 #Check to see if scan is not running or is an empty scan, if true then lets export!
