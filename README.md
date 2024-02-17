@@ -20,8 +20,8 @@ Requirements
 * PowerShell 7.0+ (7.4.1 Latest Tested)
 * .nessus File(s) Exported (Script included to export these files!)
 
-Script now includes a Menu to help you through the process to use this tool:
-![image](https://github.com/nicpenning/Nessus-ES/assets/5582679/db61fbba-352d-4d02-bb98-7c260a69a302)
+Script includes a Menu to help you through how you would like to use this tool:
+![image](https://github.com/nicpenning/Nessus-ES/assets/5582679/989727d5-65ee-49fd-9dd9-8e74724fd75e)
 
 ## Now
 - [X] Index Template (How To)
