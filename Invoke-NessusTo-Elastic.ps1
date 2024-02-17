@@ -105,7 +105,7 @@ Begin{
     $option5 = "5. Purge processed hashes list (remove list of what files have already been processed)."
     #$option10 = "10. Delete oldest scan from scan history (Future / Only works with Nessus Manager license)"
     $quit = "Q. Quit"
-    $version = "`nVersion 0.8.0"
+    $version = "`nVersion 0.8.1"
 
     function Show-Menu {
         Write-Host "Welcome to the PowerShell script that can export and ingest Nessus scan files into an Elastic stack!" -ForegroundColor Blue
@@ -250,7 +250,7 @@ Begin{
                 $global:listOfScans | ForEach-Object {
                     if ($(convertToISO($_.creation_date) | Get-Date -format "dddd-d") -eq $getDate) {
                         Write-Host "Going to export $_"
-                        export($_.id)
+                        export -scanId $($_.id) -scanName $($_.name)
                         Write-Host "Finished export of $_, going to update status..."
                     }
                 }
@@ -277,7 +277,7 @@ Begin{
             } else {
                 $global:listOfScans | ForEach-Object {
                     Write-Host "Going to export $($_.name)"
-                    export($_.id)
+                    export -scanId $($_.id) -scanName $($_.name)
                     Write-Host "Finished export of $($_.name), going to update status..."
                 }
             }
@@ -294,7 +294,7 @@ Begin{
         }
 
         function export ($scanId, $historyId, $currentConvertedTime, $scanName){
-            Write-Host "Scan ID $scanId exporting..."
+            Write-Host "Scan: $scanName exporting..."
             do {
                 if($null -eq $currentConvertedTime){
                     $convertedTime = convertToISO($($global:currentNessusScanDataRaw.scans | Where-Object {$_.id -eq $scanId}).creation_date)
@@ -909,7 +909,7 @@ Process {
                 $finished = $true
                 break
             }
-            '6' {
+            '10' {
                 Write-Host "You selected Option $option10." -ForegroundColor Yellow
                 if($null -eq $Nessus_Scan_Name_To_Delete_Oldest_Scan){
                     $Nessus_Scan_Name_To_Delete_Oldest_Scan = Read-Host "Nessus Scan Name to Delete Oldest Scan"
