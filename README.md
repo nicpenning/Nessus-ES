@@ -35,7 +35,7 @@ Script includes a Menu to help you through how you would like to use this tool:
 ## Future
 - [ ] Add Detection Rules
 - [ ] Compare Scans (New Data Stream)
-- [ ] Automate/Implement Latest CISA KEVs
+- [ ] Automate/Implement Latest CISA KEVs ([Feature Request](https://github.com/nicpenning/Nessus-ES/issues/13))
 
 ## Automated or Manual Download and Ingest capability - Check the [Wiki](https://github.com/nicpenning/Nessus-ES/wiki/Overview)!
 Invoke-NessusTo-Elastic.ps1
