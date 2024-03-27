@@ -1,5 +1,9 @@
 # Nessus-ES
 
+An update is lurking...
+![👀](https://github.com/nicpenning/Nessus-ES/assets/5582679/1a23deda-9a00-4ec4-9d99-013b7572aa91)
+
+
 Ingest .nessus files from Tenable's Nessus scanner directly into ElasticSearch with most of the ECS mappings.
 
 ```mermaid
