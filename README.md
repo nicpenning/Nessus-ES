@@ -1,6 +1,9 @@
-# Nessus-ES
+# Nessus-ES (Deprecated)
 
-An update is lurking...
+The update is here! [Click Here](https://github.com/nicpenning/Power-Nessie) to go to Power-Nessie, the update to this project.
+
+For the maintained version of this project, please navigate to the link above. This project will be archived and set to read only. Thank you!
+
 ![👀](https://github.com/nicpenning/Nessus-ES/assets/5582679/1a23deda-9a00-4ec4-9d99-013b7572aa91)
 
 
